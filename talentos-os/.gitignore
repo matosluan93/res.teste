@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+.eggs/
+*.so
+
+# Env
+.env
+.env.prod
+.env.local
+*.env
+
+# Logs
+logs/
+*.log
+
+# Uploads
+uploads/
+
+# Docker
+.docker/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tests
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Migrations (manter estrutura, ignorar cache)
+migrations/versions/*.pyc

@@ -1,0 +1,1885 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TalentOS · Plataforma de R&S</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+/* ══════════════════════════════════════════════════════
+   TOKENS
+══════════════════════════════════════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box;}
+:root,[data-theme="dark"]{
+  --bg:#07091A;--sf:#0C1228;--card:#131C38;--card2:#1A2444;
+  --bd:#1E2D50;--bd2:#253560;
+  --gold:#C9973A;--goldl:#E8B84A;--goldd:rgba(201,151,58,.13);
+  --blue:#3B7AF5;--blued:rgba(59,122,245,.13);
+  --teal:#1EC5A0;--teald:rgba(30,197,160,.13);
+  --red:#E24B4A;--redd:rgba(226,75,74,.13);
+  --amber:#F59E0B;--amberd:rgba(245,158,11,.13);
+  --purple:#8B5CF6;--purpled:rgba(139,92,246,.13);
+  --green:#22C55E;--greend:rgba(34,197,94,.13);
+  --tx:#E6EAF5;--ts:#8899BB;--tm:#3D4F78;
+  --hover:rgba(255,255,255,.03);
+  --shadow:0 4px 24px rgba(0,0,0,.45);
+  --sw:224px;
+}
+[data-theme="light"]{
+  --bg:#EEF1F8;--sf:#FFFFFF;--card:#FFFFFF;--card2:#F4F7FC;
+  --bd:#DDE3F0;--bd2:#C5CEDF;
+  --gold:#B8822A;--goldl:#C9973A;--goldd:rgba(184,130,42,.1);
+  --blue:#2B6BE0;--blued:rgba(43,107,224,.1);
+  --teal:#0EA882;--teald:rgba(14,168,130,.1);
+  --red:#D03535;--redd:rgba(208,53,53,.1);
+  --amber:#D48B0A;--amberd:rgba(212,139,10,.1);
+  --purple:#7C3AED;--purpled:rgba(124,58,237,.1);
+  --green:#16A34A;--greend:rgba(22,163,74,.1);
+  --tx:#1A2140;--ts:#5B6A8A;--tm:#9BA8C0;
+  --hover:rgba(0,0,0,.025);
+  --shadow:0 4px 24px rgba(0,0,0,.08);
+}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.5;transition:background .25s,color .25s;}
+a{color:var(--gold);text-decoration:none;}
+input,select,textarea,button{font-family:inherit;font-size:13px;}
+::selection{background:var(--goldd);}
+select option{background:var(--card);}
+
+/* ══════════════════════════════════════════════════════
+   LOGIN
+══════════════════════════════════════════════════════ */
+#login{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:1000;padding:16px;}
+.login-box{width:100%;max-width:420px;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:40px 36px;box-shadow:var(--shadow);}
+.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:32px;}
+.login-logo .brand-name{font-family:'Playfair Display',serif;font-size:20px;color:var(--gold);}
+.login-logo small{font-size:10px;color:var(--tm);letter-spacing:.07em;text-transform:uppercase;align-self:flex-end;margin-bottom:2px;}
+.login-title{font-size:22px;font-weight:600;margin-bottom:4px;}
+.login-sub{color:var(--ts);font-size:13px;margin-bottom:24px;}
+.fld{margin-bottom:12px;}
+.fld label{display:block;font-size:10px;font-weight:700;color:var(--ts);letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px;}
+.fld input,.fld select{width:100%;background:var(--sf);border:1px solid var(--bd2);border-radius:6px;padding:9px 12px;color:var(--tx);outline:none;transition:.15s;}
+.fld input:focus,.fld select:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--goldd);}
+.btn-login{width:100%;padding:11px;background:var(--gold);color:#080500;font-weight:700;font-size:14px;border:none;border-radius:6px;cursor:pointer;margin-top:6px;transition:.15s;}
+.btn-login:hover{background:var(--goldl);}
+.role-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px;}
+.role-chip{padding:5px 11px;border:1px solid var(--bd2);border-radius:20px;font-size:11px;color:var(--ts);cursor:pointer;transition:.15s;}
+.role-chip:hover,.role-chip.active{border-color:var(--gold);color:var(--gold);background:var(--goldd);}
+.login-theme{position:absolute;top:16px;right:16px;}
+
+/* ══════════════════════════════════════════════════════
+   APP SHELL
+══════════════════════════════════════════════════════ */
+#app{display:none;height:100vh;flex-direction:row;}
+#app.visible{display:flex;}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:150;}
+.overlay.open{display:block;}
+
+/* ══════════════════════════════════════════════════════
+   SIDEBAR
+══════════════════════════════════════════════════════ */
+.sidebar{width:var(--sw);min-width:var(--sw);height:100vh;background:var(--sf);border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden;transition:background .25s,border-color .25s,transform .3s;z-index:200;}
+.sb-logo{padding:16px 16px 12px;border-bottom:1px solid var(--bd);flex-shrink:0;}
+.brand{display:flex;align-items:center;gap:8px;}
+.brand-name{font-family:'Playfair Display',serif;font-size:16px;color:var(--gold);}
+.brand-tag{font-size:9px;color:var(--tm);letter-spacing:.09em;text-transform:uppercase;margin-top:1px;}
+.sb-user{padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--bd);flex-shrink:0;}
+.sb-av{width:30px;height:30px;border-radius:50%;background:var(--goldd);border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--gold);flex-shrink:0;}
+.sb-uname{font-size:12px;font-weight:600;line-height:1.2;}
+.sb-urole{font-size:10px;color:var(--ts);}
+.sb-nav{flex:1;overflow-y:auto;padding:6px 0;}
+.sb-nav::-webkit-scrollbar{width:3px;}
+.sb-nav::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px;}
+.sb-sec{padding:8px 14px 3px;font-size:9px;font-weight:700;color:var(--tm);letter-spacing:.12em;text-transform:uppercase;margin-top:2px;}
+.ni{display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;color:var(--ts);position:relative;transition:.12s;}
+.ni:hover{color:var(--tx);background:var(--hover);}
+.ni.active{color:var(--gold);background:var(--goldd);}
+.ni.active::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:2.5px;background:var(--gold);border-radius:0 2px 2px 0;}
+.ni svg{width:14px;height:14px;flex-shrink:0;}
+.ni .nl{font-size:12px;font-weight:500;}
+.ni .nb{margin-left:auto;font-size:9px;font-weight:700;padding:1px 5px;border-radius:10px;}
+.nb.red{background:var(--red);color:#fff;}
+.nb.gold{background:var(--gold);color:#080500;}
+.nb.blue{background:var(--blue);color:#fff;}
+.nb.teal{background:var(--teal);color:#fff;}
+.nb.green{background:var(--green);color:#fff;}
+.sb-foot{padding:10px 14px;border-top:1px solid var(--bd);font-size:10px;color:var(--tm);flex-shrink:0;}
+
+/* ══════════════════════════════════════════════════════
+   TOPBAR
+══════════════════════════════════════════════════════ */
+.main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;min-width:0;}
+.topbar{height:52px;border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0;background:var(--sf);transition:background .25s,border-color .25s;}
+.tb-ham{display:none;width:32px;height:32px;border:none;background:none;cursor:pointer;color:var(--ts);align-items:center;justify-content:center;border-radius:6px;flex-shrink:0;}
+.tb-ham:hover{background:var(--hover);color:var(--tx);}
+.tb-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tb-sub{font-size:11px;color:var(--ts);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.tb-search{position:relative;}
+.tb-search input{background:var(--card2);border:1px solid var(--bd);border-radius:6px;padding:6px 10px 6px 28px;color:var(--tx);width:180px;outline:none;transition:.2s;}
+.tb-search input:focus{width:220px;border-color:var(--bd2);}
+.tb-search svg{position:absolute;left:7px;top:50%;transform:translateY(-50%);color:var(--ts);width:12px;height:12px;}
+.icon-btn{width:30px;height:30px;border-radius:6px;border:1px solid var(--bd);background:var(--card2);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ts);transition:.12s;position:relative;flex-shrink:0;}
+.icon-btn:hover{color:var(--tx);border-color:var(--bd2);}
+.ndot{position:absolute;top:5px;right:5px;width:5px;height:5px;background:var(--red);border-radius:50%;}
+.theme-btn{display:flex;align-items:center;gap:5px;padding:5px 9px;border:1px solid var(--bd2);border-radius:20px;cursor:pointer;color:var(--ts);font-size:11px;background:var(--card2);transition:.15s;white-space:nowrap;}
+.theme-btn:hover{border-color:var(--gold);color:var(--gold);background:var(--goldd);}
+.theme-btn svg{width:12px;height:12px;}
+.role-badge-top{padding:3px 8px;border-radius:20px;font-size:10px;font-weight:700;}
+
+/* ══════════════════════════════════════════════════════
+   CONTENT
+══════════════════════════════════════════════════════ */
+.content{flex:1;overflow-y:auto;padding:18px 20px;background:var(--bg);transition:background .25s;}
+.content::-webkit-scrollbar{width:4px;}
+.content::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px;}
+
+/* ══════════════════════════════════════════════════════
+   PAGE
+══════════════════════════════════════════════════════ */
+.page{display:none;}
+.page.active{display:block;}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+.ph-t{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;margin-bottom:3px;}
+.ph-s{font-size:11px;color:var(--ts);}
+.ph-acts{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+
+/* ══════════════════════════════════════════════════════
+   BUTTONS
+══════════════════════════════════════════════════════ */
+.btn{padding:6px 13px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:none;transition:.12s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+.btn-p{background:var(--gold);color:#080500;}
+.btn-p:hover{background:var(--goldl);}
+.btn-g{background:transparent;color:var(--ts);border:1px solid var(--bd2);}
+.btn-g:hover{color:var(--tx);background:var(--hover);}
+.btn-t{background:var(--teald);color:var(--teal);border:1px solid rgba(30,197,160,.25);}
+.btn-b{background:var(--blued);color:var(--blue);border:1px solid rgba(59,122,245,.25);}
+.btn-r{background:var(--redd);color:var(--red);border:1px solid rgba(226,75,74,.25);}
+.btn-sm{padding:5px 10px;font-size:11px;}
+.btn-ic{width:28px;height:28px;padding:0;justify-content:center;}
+
+/* ══════════════════════════════════════════════════════
+   CARDS
+══════════════════════════════════════════════════════ */
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:16px;transition:background .25s,border-color .25s;}
+.card2{background:var(--card2);border:1px solid var(--bd);border-radius:10px;padding:12px;transition:background .25s;}
+
+/* ══════════════════════════════════════════════════════
+   KPIs
+══════════════════════════════════════════════════════ */
+.kgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:18px;}
+.kpi{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px 16px;position:relative;overflow:hidden;transition:background .25s;}
+.kpi::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;}
+.kpi.gold::after{background:var(--gold);} .kpi.blue::after{background:var(--blue);}
+.kpi.teal::after{background:var(--teal);} .kpi.red::after{background:var(--red);}
+.kpi.purple::after{background:var(--purple);} .kpi.amber::after{background:var(--amber);}
+.kpi.green::after{background:var(--green);}
+.kpi-lbl{font-size:9px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:.09em;margin-bottom:7px;}
+.kpi-val{font-size:24px;font-weight:300;font-family:'Playfair Display',serif;line-height:1.1;}
+.kpi-ch{font-size:10px;margin-top:4px;}
+.kpi-ch.up{color:var(--teal);} .kpi-ch.down{color:var(--red);} .kpi-ch.n{color:var(--ts);}
+
+/* ══════════════════════════════════════════════════════
+   CHARTS
+══════════════════════════════════════════════════════ */
+.chart-card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:16px;transition:background .25s;}
+.chart-card .ct{font-size:13px;font-weight:600;margin-bottom:2px;}
+.chart-card .cs{font-size:11px;color:var(--ts);margin-bottom:12px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.g21{display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:10px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;}
+
+/* ══════════════════════════════════════════════════════
+   BADGES
+══════════════════════════════════════════════════════ */
+.badge{display:inline-flex;align-items:center;padding:2px 6px;border-radius:20px;font-size:10px;font-weight:600;}
+.bg{background:rgba(128,128,128,.1);color:var(--ts);}
+.bgold{background:var(--goldd);color:var(--gold);}
+.bblue{background:var(--blued);color:var(--blue);}
+.bteal{background:var(--teald);color:var(--teal);}
+.bred{background:var(--redd);color:var(--red);}
+.bpurple{background:var(--purpled);color:var(--purple);}
+.bamber{background:var(--amberd);color:var(--amber);}
+.bgreen{background:var(--greend);color:var(--green);}
+
+/* ══════════════════════════════════════════════════════
+   TABLE
+══════════════════════════════════════════════════════ */
+.tw{overflow-x:auto;border-radius:10px;border:1px solid var(--bd);}
+table{width:100%;border-collapse:collapse;}
+thead{background:var(--card2);}
+th{text-align:left;padding:8px 12px;font-size:9px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:.09em;white-space:nowrap;}
+td{padding:9px 12px;border-top:1px solid var(--bd);vertical-align:middle;font-size:12px;}
+tr:hover td{background:var(--hover);}
+.tdp{font-weight:500;font-size:12px;}
+.av{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;}
+
+/* ══════════════════════════════════════════════════════
+   FILTERS
+══════════════════════════════════════════════════════ */
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
+.fs{background:var(--card);border:1px solid var(--bd);border-radius:6px;padding:5px 9px;color:var(--ts);outline:none;cursor:pointer;transition:.12s;font-size:12px;}
+.fs:hover,.fs:focus{border-color:var(--bd2);color:var(--tx);}
+.fi{background:var(--card);border:1px solid var(--bd);border-radius:6px;padding:5px 9px;color:var(--tx);outline:none;transition:.12s;font-size:12px;width:180px;}
+.fi:focus{border-color:var(--bd2);}
+
+/* ══════════════════════════════════════════════════════
+   PIPELINE
+══════════════════════════════════════════════════════ */
+.pipeline{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;}
+.pipeline::-webkit-scrollbar{height:3px;}
+.pipeline::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px;}
+.pc{min-width:175px;background:var(--card);border:1px solid var(--bd);border-radius:10px;display:flex;flex-direction:column;max-height:420px;}
+.pc-hd{padding:9px 11px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.pc-hd .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.pc-hd .lbl{font-size:10px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:.07em;}
+.pc-hd .cnt{margin-left:auto;background:rgba(128,128,128,.1);color:var(--ts);font-size:9px;padding:1px 4px;border-radius:10px;}
+.pc-body{flex:1;overflow-y:auto;padding:6px;}
+.pk{background:var(--card2);border:1px solid var(--bd);border-radius:6px;padding:8px 9px;margin-bottom:4px;cursor:pointer;transition:.12s;}
+.pk:hover{border-color:var(--bd2);}
+.pk .pn{font-size:11px;font-weight:600;margin-bottom:1px;}
+.pk .pr{font-size:9px;color:var(--ts);}
+
+/* ══════════════════════════════════════════════════════
+   SCORE BARS
+══════════════════════════════════════════════════════ */
+.sbar{display:flex;align-items:center;gap:7px;margin-bottom:6px;}
+.sbar-lbl{font-size:10px;color:var(--ts);width:120px;flex-shrink:0;}
+.sbar-track{flex:1;height:4px;background:var(--bd);border-radius:2px;overflow:hidden;}
+.sbar-fill{height:100%;border-radius:2px;transition:width .4s;}
+.sbar-val{font-size:10px;font-weight:600;width:24px;text-align:right;flex-shrink:0;}
+
+/* ══════════════════════════════════════════════════════
+   MISC
+══════════════════════════════════════════════════════ */
+.sec-t{font-size:13px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.divider{height:1px;background:var(--bd);margin:14px 0;}
+.g2c{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.g3c{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.irow{display:flex;padding:6px 0;border-bottom:1px solid var(--bd);font-size:12px;}
+.irow:last-child{border-bottom:none;}
+.ilbl{color:var(--ts);width:140px;flex-shrink:0;font-size:11px;}
+.ival{flex:1;}
+.tag{display:inline-flex;padding:2px 6px;background:rgba(128,128,128,.08);border:1px solid var(--bd2);border-radius:3px;font-size:10px;color:var(--ts);margin:2px;}
+.exec-bg{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:20px;margin-bottom:16px;background-image:linear-gradient(135deg,var(--goldd) 0%,var(--blued) 100%);}
+.tl{position:relative;padding-left:16px;}
+.tl::before{content:'';position:absolute;left:4px;top:6px;bottom:6px;width:1px;background:var(--bd2);}
+.tl-i{position:relative;padding-bottom:14px;}
+.tl-d{position:absolute;left:-14px;top:3px;width:9px;height:9px;border-radius:50%;border:2px solid var(--card);background:var(--gold);}
+.tl-d.b{background:var(--blue);} .tl-d.t{background:var(--teal);} .tl-d.r{background:var(--red);}
+.tl-date{font-size:9px;color:var(--tm);margin-bottom:1px;}
+.tl-txt{font-size:11px;}
+.disc-b{display:flex;align-items:center;gap:7px;margin-bottom:7px;}
+.disc-tr{flex:1;height:14px;background:var(--bd);border-radius:3px;overflow:hidden;}
+.disc-fi{height:100%;border-radius:3px;display:flex;align-items:center;padding-left:7px;font-size:9px;font-weight:700;color:#fff;}
+.disc-lbl{font-size:11px;font-weight:700;width:14px;}
+.spin{width:14px;height:14px;border:2px solid var(--bd2);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.ai-zone{background:var(--card2);border:1.5px dashed var(--bd2);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:.15s;}
+.ai-zone:hover{border-color:var(--gold);}
+.ai-res{background:var(--card2);border:1px solid var(--bd);border-radius:10px;padding:16px;}
+.ai-s-t{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--ts);margin-bottom:5px;}
+.audit-r{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--bd);align-items:flex-start;}
+.audit-ic{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;}
+.toggle{position:relative;width:38px;height:20px;cursor:pointer;}
+.toggle input{opacity:0;width:0;height:0;position:absolute;}
+.tgl-tr{width:38px;height:20px;background:var(--bd2);border-radius:10px;transition:.2s;}
+.toggle input:checked+.tgl-tr{background:var(--teal);}
+.tgl-th{position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:.2s;pointer-events:none;}
+.toggle input:checked~.tgl-th{left:20px;}
+/* Tab active state for custom tabs */
+.mtab.active{color:var(--gold)!important;border-bottom:2px solid var(--gold)!important;}
+/* Lex result boxes */
+.lex-approved{background:rgba(30,197,160,.1);border:1.5px solid var(--teal);border-radius:10px;padding:16px;}
+.lex-reproved{background:rgba(226,75,74,.1);border:1.5px solid var(--red);border-radius:10px;padding:16px;}
+.lex-human{background:rgba(245,158,11,.1);border:1.5px solid var(--amber);border-radius:10px;padding:16px;}
+/* Batch CV entry */
+.cv-entry{background:var(--card2);border:1px solid var(--bd);border-radius:8px;padding:12px;margin-bottom:8px;}
+.cv-entry-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.cv-entry-num{width:22px;height:22px;border-radius:50%;background:var(--blued);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;}
+/* Ranking result cards */
+.rank-card{background:var(--card2);border:1px solid var(--bd);border-radius:8px;padding:12px;margin-bottom:8px;position:relative;}
+.rank-pos{position:absolute;top:12px;right:12px;font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--tm);}
+.rank-pos.gold{color:var(--gold);} .rank-pos.silver{color:#A0AEC0;} .rank-pos.bronze{color:#CD7F32;}
+
+/* ══════════════════════════════════════════════════════
+   PLATAFORMAS
+══════════════════════════════════════════════════════ */
+.plat-card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:18px;position:relative;overflow:hidden;}
+.plat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.plat-gupy::before{background:#4338CA;}
+.plat-linkedin::before{background:#0077B5;}
+.plat-pandape::before{background:#FF6B35;}
+.plat-indicacao::before{background:var(--gold);}
+.plat-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:12px;}
+.plat-name{font-size:15px;font-weight:600;margin-bottom:2px;}
+.plat-desc{font-size:11px;color:var(--ts);margin-bottom:14px;}
+.plat-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.plat-stat{background:var(--card2);border-radius:6px;padding:10px;text-align:center;}
+.plat-stat .ps-val{font-size:18px;font-weight:300;font-family:'Playfair Display',serif;}
+.plat-stat .ps-lbl{font-size:9px;color:var(--ts);text-transform:uppercase;letter-spacing:.06em;}
+
+/* ══════════════════════════════════════════════════════
+   CÉLULA
+══════════════════════════════════════════════════════ */
+.celula-card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:16px;}
+.cel-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.cel-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.cel-recruiter{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bd);}
+.cel-recruiter:last-child{border-bottom:none;}
+
+/* ══════════════════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════════════════ */
+.mov{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;display:none;align-items:center;justify-content:center;padding:16px;}
+.mov.open{display:flex;}
+.modal{background:var(--card);border:1px solid var(--bd);border-radius:14px;width:700px;max-width:100%;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow);}
+.modal::-webkit-scrollbar{width:4px;}
+.modal::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px;}
+.mhd{padding:18px 22px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:flex-start;gap:10px;position:sticky;top:0;background:var(--card);z-index:1;}
+.mcl{margin-left:auto;cursor:pointer;color:var(--ts);border:none;background:none;font-size:20px;line-height:1;flex-shrink:0;}
+.mcl:hover{color:var(--tx);}
+.mbdy{padding:18px 22px;}
+.mtabs{display:flex;border-bottom:1px solid var(--bd);margin-bottom:14px;}
+.mtab{padding:7px 12px;font-size:11px;font-weight:500;color:var(--ts);cursor:pointer;border-bottom:2px solid transparent;transition:.12s;}
+.mtab.active{color:var(--gold);border-color:var(--gold);}
+
+/* ══════════════════════════════════════════════════════
+   TOASTS
+══════════════════════════════════════════════════════ */
+#toasts{position:fixed;bottom:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;}
+.toast{background:var(--card2);border:1px solid var(--bd2);border-radius:6px;padding:9px 12px;font-size:12px;display:flex;align-items:center;gap:7px;animation:slin .2s ease;min-width:200px;max-width:280px;box-shadow:var(--shadow);}
+.toast.success{border-left:3px solid var(--teal);} .toast.error{border-left:3px solid var(--red);} .toast.info{border-left:3px solid var(--blue);}
+@keyframes slin{from{transform:translateX(14px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+
+/* ══════════════════════════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+══════════════════════════════════════════════════════ */
+
+/* Tablet: 768-1024px */
+@media (max-width:1024px){
+  :root{--sw:210px;}
+  .g2{grid-template-columns:1fr;} .g21{grid-template-columns:1fr;} .g3{grid-template-columns:1fr 1fr;}
+  .g2c{grid-template-columns:1fr;} .g3c{grid-template-columns:1fr 1fr;}
+  .kgrid{grid-template-columns:repeat(3,1fr);}
+  .tb-sub{display:none;}
+  .tb-search input{width:150px;}
+  .tb-search input:focus{width:180px;}
+}
+
+/* Mobile: < 768px */
+@media (max-width:767px){
+  :root{--sw:224px;}
+  html,body{overflow:hidden;}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;transform:translateX(-100%);z-index:200;box-shadow:var(--shadow);}
+  .sidebar.open{transform:translateX(0);}
+  .tb-ham{display:flex;}
+  .main{width:100%;}
+  .content{padding:12px 14px;}
+  .tb-sub,.tb-search,.theme-btn span{display:none;}
+  .tb-title{font-size:14px;}
+  .kgrid{grid-template-columns:repeat(2,1fr);gap:8px;}
+  .g2{grid-template-columns:1fr;} .g21{grid-template-columns:1fr;} .g3{grid-template-columns:1fr;}
+  .g2c{grid-template-columns:1fr;} .g3c{grid-template-columns:1fr;}
+  .ph{flex-direction:column;gap:10px;}
+  .ph-acts{width:100%;justify-content:flex-start;}
+  .filters{gap:5px;}
+  .fi{width:140px;}
+  .plat-stats{grid-template-columns:1fr 1fr;}
+  .pipeline{flex-wrap:nowrap;}
+  .mov{padding:0;}
+  .modal{border-radius:0;max-height:100vh;height:100vh;width:100%;max-width:100%;}
+  table td:nth-child(n+5){display:none;}
+  table th:nth-child(n+5){display:none;}
+  .exec-bg{padding:16px;}
+}
+
+/* Extra small: < 480px */
+@media (max-width:479px){
+  .kgrid{grid-template-columns:1fr 1fr;}
+  .kpi-val{font-size:20px;}
+  table td:nth-child(n+4){display:none;}
+  table th:nth-child(n+4){display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="login-theme">
+    <div class="theme-btn" onclick="toggleTheme()">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      <span id="ltxt">Modo Claro</span>
+    </div>
+  </div>
+  <div class="login-box">
+    <div class="login-logo"><svg width="22" height="22" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="13" stroke="var(--gold)" stroke-width="1.5"/><path d="M8 14h12M14 8v12M10 10l8 8M18 10l-8 8" stroke="var(--gold)" stroke-width="1.3" stroke-linecap="round"/></svg><span class="brand-name">TalentOS</span><small>Brasil</small></div>
+    <div class="login-title">Bem-vindo(a)</div>
+    <div class="login-sub">Plataforma interna de Recrutamento &amp; Seleção</div>
+    <div class="fld"><label>E-mail corporativo</label><input type="email" id="l-email" value="ana.lima@empresa.com.br"></div>
+    <div class="fld"><label>Senha</label><input type="password" value="••••••••"></div>
+    <div class="fld"><label>Perfil de acesso</label><select id="l-role"><option value="recruiter">Recrutador(a)</option><option value="manager">Gerente de RH</option><option value="director">Gerente Executiva de R&amp;S</option></select></div>
+    <button class="btn-login" onclick="doLogin()">Entrar na plataforma</button>
+    <div style="margin-top:16px;border-top:1px solid var(--bd);padding-top:14px;"><p style="font-size:10px;color:var(--tm);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;">Acessos rápidos para demo</p>
+    <div class="role-chips">
+      <div class="role-chip" onclick="setRole('recruiter')">Recrutador</div>
+      <div class="role-chip" onclick="setRole('manager')">Gerente RH</div>
+      <div class="role-chip active" onclick="setRole('director')">Gerente Exec. R&amp;S</div>
+    </div></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="brand"><svg width="16" height="16" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="13" stroke="var(--gold)" stroke-width="1.5"/><path d="M8 14h12M14 8v12M10 10l8 8M18 10l-8 8" stroke="var(--gold)" stroke-width="1.3" stroke-linecap="round"/></svg><span class="brand-name">TalentOS</span></div>
+      <div class="brand-tag">Gente &amp; Cultura · Brasil</div>
+    </div>
+    <div class="sb-user">
+      <div class="sb-av" id="sb-av">AL</div>
+      <div><div class="sb-uname" id="sb-uname">Ana Lima</div><div class="sb-urole" id="sb-urole">Gerente Exec. R&S</div></div>
+    </div>
+    <nav class="sb-nav" id="sb-nav"></nav>
+    <div class="sb-foot">v3.0 · TalentOS Brasil</div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <header class="topbar">
+      <button class="tb-ham" onclick="toggleSidebar()" aria-label="Menu">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <span class="tb-title" id="tb-title">Dashboard</span>
+      <span class="tb-sub" id="tb-sub">Visão geral</span>
+      <div class="tb-right">
+        <div class="tb-search"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><input type="text" placeholder="Buscar..." id="gsearch" oninput="gSearch(this.value)"></div>
+        <div class="icon-btn" onclick="showToast('3 novas candidaturas','info')" title="Notificações"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg><span class="ndot"></span></div>
+        <div class="theme-btn" onclick="toggleTheme()"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg><span id="ttxt">Claro</span></div>
+        <div class="icon-btn" onclick="logout()" title="Sair" style="color:var(--red);border-color:var(--redd);"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
+      </div>
+    </header>
+    <main class="content" id="content-area">
+
+<!-- ═════════ DASHBOARD ════════════════════════════════ -->
+<div id="view-dashboard" class="page active">
+  <div class="ph"><div><div class="ph-t">Dashboard R&S</div><div class="ph-s" id="d-date"></div></div>
+  <div class="ph-acts"><select class="fs"><option>Abril 2025</option><option>Março 2025</option></select><button class="btn btn-g btn-sm" onclick="showToast('Exportado','success')">Exportar</button></div></div>
+  <div class="kgrid" id="dash-kpis"></div>
+  <div class="g21">
+    <div class="chart-card"><div class="ct">Pipeline por etapa</div><div class="cs">Candidatos por fase</div><div style="position:relative;height:200px;"><canvas id="ch-pipeline" role="img" aria-label="Pipeline por etapa"></canvas></div></div>
+    <div class="chart-card"><div class="ct">Status Geral</div><div class="cs">Distribuição</div><div style="position:relative;height:200px;"><canvas id="ch-status" role="img" aria-label="Status geral"></canvas></div></div>
+  </div>
+  <div class="g2">
+    <div class="chart-card"><div class="ct">Contratações mensais</div><div class="cs">Últimos 6 meses</div><div style="position:relative;height:170px;"><canvas id="ch-monthly" role="img" aria-label="Contratações mensais"></canvas></div></div>
+    <div class="chart-card"><div class="ct">Fontes de candidatura</div><div class="cs">Por canal</div><div style="position:relative;height:170px;"><canvas id="ch-sources" role="img" aria-label="Fontes de candidatura"></canvas></div></div>
+  </div>
+  <div class="sec-t">Últimas candidaturas <span class="badge bblue">Hoje</span></div>
+  <div class="tw"><table><thead><tr><th>Candidato</th><th>Vaga</th><th>Etapa</th><th>Score IA</th><th>Data</th><th>Ações</th></tr></thead><tbody id="dash-table"></tbody></table></div>
+</div>
+
+<!-- ═════════ CURRÍCULOS ══════════════════════════════ -->
+<div id="view-curriculos" class="page">
+  <div class="ph"><div><div class="ph-t">Currículos</div><div class="ph-s">Biblioteca de currículos</div></div>
+  <div class="ph-acts"><button class="btn btn-g btn-sm" onclick="showToast('Exportado','success')">Exportar</button><button class="btn btn-p btn-sm">+ Importar CVs</button></div></div>
+  <div class="filters">
+    <input class="fi" type="text" placeholder="Buscar candidato..." id="cv-s" oninput="filterTable()">
+    <select class="fs" id="cvf-st" onchange="filterTable()"><option value="">Todas etapas</option><option>Triagem</option><option>Entrevista RH</option><option>Técnica</option><option>Final</option><option>Proposta</option></select>
+    <select class="fs" id="cvf-ar" onchange="filterTable()"><option value="">Todas áreas</option><option>Tecnologia</option><option>Comercial</option><option>Financeiro</option><option>Marketing</option><option>Operações</option><option>RH</option></select>
+    <select class="fs" id="cvf-sc" onchange="filterTable()"><option value="">Score IA</option><option value="h">Alto (80+)</option><option value="m">Médio (60-79)</option><option value="l">Baixo (-60)</option></select>
+  </div>
+  <div class="tw"><table><thead><tr><th><input type="checkbox"></th><th>Candidato</th><th>Vaga / Área</th><th>Etapa</th><th>Score IA</th><th>Idioma</th><th>Data</th><th>Ações</th></tr></thead><tbody id="cv-table"></tbody></table></div>
+  <div style="display:flex;justify-content:flex-end;margin-top:8px;"><span id="cv-cnt" style="font-size:10px;color:var(--ts);"></span></div>
+</div>
+
+<!-- ═════════ TALENTOS ════════════════════════════════ -->
+<div id="view-talentos" class="page">
+  <div class="ph"><div><div class="ph-t">Banco de Talentos</div><div class="ph-s">Perfis de alto potencial</div></div><div class="ph-acts"><button class="btn btn-p btn-sm">+ Adicionar Talento</button></div></div>
+  <div class="kgrid" style="grid-template-columns:repeat(4,1fr);"><div class="kpi blue"><div class="kpi-lbl">Cadastrados</div><div class="kpi-val">312</div></div><div class="kpi teal"><div class="kpi-lbl">Disponíveis</div><div class="kpi-val">87</div></div><div class="kpi gold"><div class="kpi-lbl">Score médio</div><div class="kpi-val">81</div></div><div class="kpi purple"><div class="kpi-lbl">Convertidos</div><div class="kpi-val">23</div></div></div>
+  <div class="filters"><input class="fi" type="text" placeholder="Buscar..."><select class="fs"><option>Área</option><option>Tecnologia</option><option>Marketing</option></select><select class="fs"><option>Disponibilidade</option><option>Imediato</option><option>30 dias</option><option>60+ dias</option></select></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;" id="talent-grid"></div>
+</div>
+
+<!-- ═════════ VAGAS ═══════════════════════════════════ -->
+<div id="view-vagas" class="page">
+  <div class="ph"><div><div class="ph-t">Vagas</div><div class="ph-s">Posições abertas e headcount aprovado</div></div>
+  <div class="ph-acts"><select class="fs"><option>Todas áreas</option><option>Tecnologia</option><option>Comercial</option></select><button class="btn btn-p btn-sm">+ Nova Vaga</button></div></div>
+  <div class="kgrid"><div class="kpi gold"><div class="kpi-lbl">Total abertas</div><div class="kpi-val">23</div></div><div class="kpi red"><div class="kpi-lbl">Críticas</div><div class="kpi-val">2</div></div><div class="kpi teal"><div class="kpi-lbl">Com finalistas</div><div class="kpi-val">8</div></div><div class="kpi blue"><div class="kpi-lbl">Novas/mês</div><div class="kpi-val">4</div></div></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;" id="vagas-grid"></div>
+</div>
+
+<!-- ═════════ PIPELINE ════════════════════════════════ -->
+<div id="view-pipeline" class="page">
+  <div class="ph"><div><div class="ph-t">Pipeline Kanban</div><div class="ph-s">Visão por etapas do processo</div></div><div class="ph-acts"><select class="fs"><option>Todas as vagas</option><option>Engenheiro Sênior</option></select></div></div>
+  <div class="pipeline" id="pipeline-board"></div>
+</div>
+
+<!-- ═════════ ENTREVISTAS ═════════════════════════════ -->
+<div id="view-entrevistas" class="page">
+  <div class="ph"><div><div class="ph-t">Entrevistas</div><div class="ph-s">Agendamentos e gestão</div></div><div class="ph-acts"><button class="btn btn-p btn-sm" onclick="openInviteModal()">+ Nova Entrevista</button></div></div>
+  <div class="g3c" style="margin-bottom:16px;">
+    <div class="card2" style="border-left:3px solid var(--gold);"><div class="sec-t" style="font-size:11px;margin-bottom:7px;">Hoje</div><div id="int-today"></div></div>
+    <div class="card2" style="border-left:3px solid var(--blue);"><div class="sec-t" style="font-size:11px;margin-bottom:7px;">Esta semana</div><div id="int-week"></div></div>
+    <div class="card2" style="border-left:3px solid var(--ts);"><div class="sec-t" style="font-size:11px;margin-bottom:7px;">Aguard. feedback</div><div id="int-feedback"></div></div>
+  </div>
+  <div class="tw"><table><thead><tr><th>Candidato</th><th>Vaga</th><th>Tipo</th><th>Data/Hora</th><th>Status</th><th>Ações</th></tr></thead><tbody id="int-table"></tbody></table></div>
+</div>
+
+<!-- ═════════ CONVITES ════════════════════════════════ -->
+<div id="view-convites" class="page">
+  <div class="ph"><div><div class="ph-t">Convites &amp; Agendamentos</div><div class="ph-s">Envio via WhatsApp e acompanhamento de convites técnicos</div></div><div class="ph-acts"><button class="btn btn-p btn-sm" onclick="openInviteModal()">+ Enviar Convite</button></div></div>
+  <div class="kgrid"><div class="kpi blue"><div class="kpi-lbl">Enviados hoje</div><div class="kpi-val">6</div></div><div class="kpi teal"><div class="kpi-lbl">Aceitos</div><div class="kpi-val">14</div></div><div class="kpi amber"><div class="kpi-lbl">Aguardando</div><div class="kpi-val">8</div></div><div class="kpi red"><div class="kpi-lbl">Recusados</div><div class="kpi-val">3</div></div></div>
+
+  <!-- GERADOR DE MENSAGEM WHATSAPP -->
+  <div class="card" style="margin-bottom:16px;border-left:3px solid var(--teal);">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+      <svg width="16" height="16" fill="none" stroke="var(--teal)" stroke-width="2" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+      <div style="font-size:13px;font-weight:600;">Gerador de Mensagem WhatsApp</div>
+      <span class="badge bteal" style="margin-left:auto;">Stefanini · R&S</span>
+    </div>
+    <div class="g2c" style="gap:12px;margin-bottom:14px;">
+      <div class="fld"><label>Seu nome (recrutador)</label><input type="text" id="wa-rec" placeholder="Ex: Carlos Mendes"></div>
+      <div class="fld"><label>Nome da vaga</label><input type="text" id="wa-vaga" placeholder="Ex: Engenheiro Sênior Backend"></div>
+      <div class="fld"><label>Nome do candidato</label><input type="text" id="wa-cand" placeholder="Ex: Rafael Souza"></div>
+      <div class="fld"><label>WhatsApp do candidato (com DDD)</label><input type="text" id="wa-phone" placeholder="Ex: 11999990000" maxlength="15" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+      <button class="btn btn-t" onclick="generateWA('direto')" style="flex:1;justify-content:center;min-width:140px;">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Convite Direto
+      </button>
+      <button class="btn btn-b" onclick="generateWA('perguntas')" style="flex:1;justify-content:center;min-width:140px;">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Pré-Perguntas
+      </button>
+    </div>
+    <div id="wa-result" style="display:none;">
+      <div style="background:var(--card2);border:1px solid var(--bd);border-radius:8px;padding:14px;margin-bottom:10px;">
+        <div style="font-size:9px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;" id="wa-type-label">Mensagem gerada</div>
+        <pre id="wa-msg-pre" style="font-size:12px;line-height:1.7;white-space:pre-wrap;font-family:'DM Sans',sans-serif;color:var(--tx);"></pre>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-g btn-sm" onclick="copyWA()">
+          <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Copiar mensagem
+        </button>
+        <a id="wa-link" href="#" target="_blank" class="btn btn-t btn-sm" style="text-decoration:none;">
+          <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+          Abrir no WhatsApp
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-t">Convites recentes</div>
+  <div class="tw"><table><thead><tr><th>Candidato</th><th>Vaga</th><th>Tipo</th><th>Enviado</th><th>Status</th><th>Ações</th></tr></thead><tbody id="convites-table"></tbody></table></div>
+</div>
+
+<!-- ═════════ COMPARATIVO ═════════════════════════════ -->
+<div id="view-comparativo" class="page">
+  <div class="ph"><div><div class="ph-t">Comparativo</div><div class="ph-s">Análise lado a lado</div></div><div class="ph-acts"><button class="btn btn-g btn-sm" onclick="showToast('PDF exportado','success')">Exportar PDF</button></div></div>
+  <div class="filters"><select class="fs" id="cc1" onchange="buildComp()"><option value="">Candidato 1...</option></select><select class="fs" id="cc2" onchange="buildComp()"><option value="">Candidato 2...</option></select><select class="fs" id="cc3" onchange="buildComp()"><option value="">Candidato 3...</option></select></div>
+  <div id="comp-result"></div>
+  <div style="margin-top:12px;"><div class="chart-card"><div class="ct">Radar comparativo</div><div style="position:relative;height:260px;"><canvas id="ch-radar" role="img" aria-label="Radar comparativo"></canvas></div></div></div>
+</div>
+
+<!-- ═════════ CV ANALYSIS ═════════════════════════════ -->
+<div id="view-cv-analysis" class="page">
+  <div class="ph"><div><div class="ph-t">Análise de CV — IA</div><div class="ph-s">Análise individual e ranking em lote com Inteligência Artificial</div></div></div>
+  <!-- TABS -->
+  <div style="display:flex;gap:0;border-bottom:1px solid var(--bd);margin-bottom:16px;">
+    <div class="mtab active" onclick="switchCVTab(this,'cva-ind')" style="padding:8px 16px;font-size:12px;font-weight:500;color:var(--ts);cursor:pointer;border-bottom:2px solid transparent;transition:.12s;">Análise Individual</div>
+    <div class="mtab" onclick="switchCVTab(this,'cva-batch')" style="padding:8px 16px;font-size:12px;font-weight:500;color:var(--ts);cursor:pointer;border-bottom:2px solid transparent;transition:.12s;">Ranking em Lote <span class="badge bteal" style="font-size:9px;margin-left:4px;">Até 10 CVs</span></div>
+  </div>
+
+  <!-- INDIVIDUAL -->
+  <div id="cva-ind">
+    <div class="ph-acts" style="margin-bottom:12px;"><select class="fs" id="cv-vaga"><option value="">Vincular a uma vaga...</option><option>Engenheiro Sênior Backend</option><option>Head de Marketing</option><option>CFO</option><option>Tech Lead Cloud</option></select></div>
+    <div class="g2c" style="gap:16px;">
+      <div>
+        <div class="card" style="margin-bottom:10px;">
+          <div class="sec-t" style="font-size:11px;margin-bottom:8px;">Cole o currículo abaixo</div>
+          <textarea id="cv-text" style="width:100%;height:220px;background:var(--card2);border:1px solid var(--bd2);border-radius:6px;padding:10px;color:var(--tx);resize:vertical;outline:none;font-size:12px;line-height:1.6;transition:background .25s;" placeholder="Cole o texto do currículo aqui..."></textarea>
+          <button class="btn btn-p" style="width:100%;margin-top:8px;justify-content:center;" onclick="analyzeCV()">Analisar com IA</button>
+        </div>
+        <div class="card" style="padding:12px;"><div class="sec-t" style="font-size:11px;margin-bottom:8px;">Histórico</div><div id="cv-hist"></div></div>
+      </div>
+      <div><div id="cv-result"><div class="ai-zone" onclick="document.getElementById('cv-text').focus()"><svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.3" viewBox="0 0 24 24" style="display:block;margin:0 auto 8px;color:var(--ts);"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><p style="font-size:12px;color:var(--ts);">Cole o currículo ao lado e clique em <strong style="color:var(--tx);">Analisar</strong></p></div></div></div>
+    </div>
+  </div>
+
+  <!-- RANKING EM LOTE -->
+  <div id="cva-batch" style="display:none;">
+    <div class="g2c" style="gap:16px;align-items:start;">
+      <div>
+        <div class="card" style="margin-bottom:12px;">
+          <div class="sec-t" style="font-size:11px;margin-bottom:8px;">Descrição da Vaga</div>
+          <textarea id="batch-job-desc" style="width:100%;height:160px;background:var(--card2);border:1px solid var(--bd2);border-radius:6px;padding:10px;color:var(--tx);resize:vertical;outline:none;font-size:12px;line-height:1.6;transition:background .25s;" placeholder="Cole aqui a descrição completa da vaga: requisitos técnicos, responsabilidades, experiência necessária, diferenciais..."></textarea>
+        </div>
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div class="sec-t" style="font-size:11px;margin-bottom:0;">Currículos para análise</div>
+            <button class="btn btn-g btn-sm" onclick="addCVEntry()" id="btn-add-cv">+ Adicionar CV</button>
+          </div>
+          <div id="batch-cv-list"></div>
+          <button class="btn btn-p" style="width:100%;margin-top:10px;justify-content:center;" onclick="rankCVs()">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            Gerar Ranking com IA
+          </button>
+        </div>
+      </div>
+      <div><div id="batch-result">
+        <div class="ai-zone" style="padding:28px 16px;">
+          <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.3" viewBox="0 0 24 24" style="display:block;margin:0 auto 10px;color:var(--ts);"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <p style="font-size:12px;color:var(--ts);text-align:center;">Adicione a descrição da vaga e os currículos, depois clique em <strong style="color:var(--tx);">Gerar Ranking</strong></p>
+          <p style="font-size:10px;color:var(--tm);text-align:center;margin-top:5px;">A IA analisará cada candidato e gerará um ranking individualizado com justificativas</p>
+        </div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════ IDIOMAS ═════════════════════════════════ -->
+<div id="view-idiomas" class="page">
+  <div class="ph"><div><div class="ph-t">Idiomas &amp; Entrevistas</div><div class="ph-s">Avaliação de proficiência com análise de entrevista</div></div><div class="ph-acts"><button class="btn btn-p btn-sm">+ Nova Avaliação</button></div></div>
+
+  <!-- AVALIAÇÃO POR ENTREVISTA -->
+  <div class="card" style="margin-bottom:14px;border-left:3px solid var(--blue);">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+      <svg width="15" height="15" fill="none" stroke="var(--blue)" stroke-width="2" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+      <div style="font-size:13px;font-weight:600;">Análise de Entrevista em Idioma Estrangeiro</div>
+      <span class="badge bblue" style="margin-left:auto;">IA</span>
+    </div>
+    <div class="g2c" style="gap:12px;margin-bottom:12px;">
+      <div class="fld"><label>Candidato</label>
+        <select class="fi" style="width:100%;" id="lang-cand-sel">
+          <option value="">Selecionar candidato...</option>
+          <option>Rafael Souza</option><option>Camila Rodrigues</option><option>Eduardo Castro</option>
+          <option>Juliana Ferreira</option><option>Thiago Almeida</option>
+        </select>
+      </div>
+      <div class="fld"><label>Idioma avaliado</label>
+        <select class="fi" style="width:100%;" id="lang-idioma-sel">
+          <option>Inglês</option><option>Espanhol</option><option>Francês</option><option>Alemão</option><option>Mandarim</option>
+        </select>
+      </div>
+    </div>
+    <div class="g2c" style="gap:12px;margin-bottom:12px;">
+      <!-- Gravação -->
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Gravação da Entrevista</div>
+        <div id="rec-drop-zone" style="border:1.5px dashed var(--bd2);border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:.15s;"
+          ondragover="event.preventDefault();this.style.borderColor='var(--blue)';"
+          ondragleave="this.style.borderColor='var(--bd2)';"
+          ondrop="handleRecDrop(event)"
+          onclick="document.getElementById('rec-file-inp').click()">
+          <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="display:block;margin:0 auto 6px;color:var(--ts);"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          <div style="font-size:11px;font-weight:600;color:var(--ts);" id="rec-drop-txt">Clique ou arraste a gravação</div>
+          <div style="font-size:10px;color:var(--tm);margin-top:3px;">MP3, MP4, WAV, M4A — até 200MB</div>
+        </div>
+        <input type="file" id="rec-file-inp" accept="audio/*,video/*" style="display:none;" onchange="handleRecFile(this)">
+        <div id="rec-file-info" style="display:none;margin-top:8px;padding:8px 10px;background:var(--blued);border:1px solid rgba(59,122,245,.25);border-radius:6px;font-size:11px;color:var(--blue);"></div>
+      </div>
+      <!-- Transcrição -->
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Transcrição da Entrevista</div>
+        <textarea id="lang-transcript" style="width:100%;height:150px;background:var(--card2);border:1px solid var(--bd2);border-radius:6px;padding:10px;color:var(--tx);resize:vertical;outline:none;font-size:11px;line-height:1.6;transition:background .25s;" placeholder="Cole aqui a transcrição da entrevista em idioma estrangeiro...&#10;&#10;Exemplo:&#10;Interviewer: Tell me about your experience with cloud infrastructure.&#10;Candidate: I have been working with AWS for the past six years, mainly focusing on...&#10;&#10;A IA avaliará fluência, gramática, vocabulário e coerência."></textarea>
+      </div>
+    </div>
+    <button class="btn btn-b" style="width:100%;justify-content:center;" onclick="analyzeTranscript()">
+      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      Analisar Proficiência com IA
+    </button>
+    <div id="lang-analysis-result" style="margin-top:12px;"></div>
+  </div>
+
+  <div class="g2c" style="margin-bottom:14px;"><div class="card"><div class="sec-t">Avaliações recentes</div><div id="lang-list"></div></div><div class="chart-card"><div class="ct">Distribuição de proficiência</div><div style="position:relative;height:190px;"><canvas id="ch-lang" role="img" aria-label="Proficiência idiomas"></canvas></div></div></div>
+  <div class="divider"></div><div class="sec-t">Candidatos avaliados</div>
+  <div class="tw"><table><thead><tr><th>Candidato</th><th>Idioma</th><th>Nível</th><th>Speaking</th><th>Score</th><th>Status</th></tr></thead><tbody id="lang-table"></tbody></table></div>
+</div>
+
+<!-- ═════════ ANÁLISE DE PERFIS ═══════════════════════ -->
+<div id="view-perfis" class="page">
+  <div class="ph"><div><div class="ph-t">Análise de Perfis</div><div class="ph-s">DISC, fit cultural e competências comportamentais</div></div><div class="ph-acts"><button class="btn btn-p btn-sm">+ Nova Avaliação</button></div></div>
+  <div class="kgrid"><div class="kpi blue"><div class="kpi-lbl">Avaliados</div><div class="kpi-val">38</div></div><div class="kpi teal"><div class="kpi-lbl">Fit alto</div><div class="kpi-val">21</div></div><div class="kpi gold"><div class="kpi-lbl">Score médio</div><div class="kpi-val">76</div></div><div class="kpi purple"><div class="kpi-lbl">Pendentes</div><div class="kpi-val">9</div></div></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;" id="perfis-grid"></div>
+</div>
+
+<!-- ═════════ PERFIS EXECUTIVOS ═══════════════════════ -->
+<div id="view-executivos" class="page">
+  <div class="ph"><div><div class="ph-t">Perfis Executivos</div><div class="ph-s">C-Level e liderança sênior</div></div><div class="ph-acts"><button class="btn btn-p btn-sm">+ Iniciar Avaliação</button></div></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;" id="exec-cards"></div>
+</div>
+
+<!-- ═════════ ANÁLISE JURÍDICA ════════════════════════ -->
+<div id="view-juridico" class="page">
+  <div class="ph"><div><div class="ph-t">Análise Jurídica — LexAnalyzer</div><div class="ph-s">Background check automatizado por IA · Stefanini</div></div></div>
+  <div class="kgrid"><div class="kpi teal"><div class="kpi-lbl">Aprovados</div><div class="kpi-val">38</div></div><div class="kpi amber"><div class="kpi-lbl">Em análise</div><div class="kpi-val">12</div></div><div class="kpi red"><div class="kpi-lbl">Pendências</div><div class="kpi-val">3</div></div><div class="kpi blue"><div class="kpi-lbl">Analisados hoje</div><div class="kpi-val">7</div></div></div>
+
+  <!-- TABS -->
+  <div style="display:flex;gap:0;border-bottom:1px solid var(--bd);margin-bottom:16px;">
+    <div class="mtab active" onclick="switchLexTab(this,'lex-form-tab')" style="padding:8px 16px;font-size:12px;font-weight:500;color:var(--ts);cursor:pointer;border-bottom:2px solid transparent;transition:.12s;" id="lxt1">Nova Análise — LexAnalyzer</div>
+    <div class="mtab" onclick="switchLexTab(this,'lex-hist-tab')" style="padding:8px 16px;font-size:12px;font-weight:500;color:var(--ts);cursor:pointer;border-bottom:2px solid transparent;transition:.12s;" id="lxt2">Histórico de Análises</div>
+  </div>
+
+  <!-- NOVA ANÁLISE -->
+  <div id="lex-form-tab">
+    <div class="g2c" style="gap:16px;align-items:start;">
+      <div>
+        <div class="card" style="margin-bottom:12px;">
+          <div style="font-size:10px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;">Identificação do Candidato</div>
+          <div class="fld"><label>Nome completo</label><input type="text" id="lex-nome" placeholder="Nome do candidato..."></div>
+          <div class="fld"><label>CPF</label><input type="text" id="lex-cpf" placeholder="000.000.000-00" maxlength="14"></div>
+          <div class="fld"><label>Vaga</label><input type="text" id="lex-vaga" placeholder="Cargo / Vaga em processo..."></div>
+        </div>
+        <div class="card" style="margin-bottom:12px;">
+          <div style="font-size:10px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;">Fontes de Dados</div>
+          <div class="fld"><label>Natcorp — Resultado da consulta</label>
+            <textarea id="lex-natcorp" style="width:100%;height:90px;background:var(--card2);border:1px solid var(--bd2);border-radius:6px;padding:8px 10px;color:var(--tx);resize:vertical;outline:none;font-size:12px;line-height:1.5;transition:background .25s;" placeholder="Cole aqui o resultado do Natcorp (demissão, justificativa, indicação, tempo de retorno, etc.)..."></textarea>
+          </div>
+          <div class="fld"><label>Escavador — Resultado da consulta</label>
+            <textarea id="lex-escavador" style="width:100%;height:90px;background:var(--card2);border:1px solid var(--bd2);border-radius:6px;padding:8px 10px;color:var(--tx);resize:vertical;outline:none;font-size:12px;line-height:1.5;transition:background .25s;" placeholder="Cole aqui os processos encontrados no Escavador (número, natureza, papel, assunto, status)..."></textarea>
+          </div>
+          <div class="fld"><label>Outras Plataformas</label>
+            <textarea id="lex-outras" style="width:100%;height:70px;background:var(--card2);border:1px solid var(--bd2);border-radius:6px;padding:8px 10px;color:var(--tx);resize:vertical;outline:none;font-size:12px;line-height:1.5;transition:background .25s;" placeholder="Outros dados consultados (Jusbrasil, JusDois, etc.)..."></textarea>
+          </div>
+          <button class="btn btn-p" style="width:100%;justify-content:center;margin-top:4px;" onclick="runLexAnalyzer()">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+            Analisar com LexAnalyzer
+          </button>
+        </div>
+        <div class="card" style="padding:12px;background:var(--amberd);border-color:rgba(245,158,11,.25);">
+          <div style="font-size:10px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;">Regras de Reprovação Automática</div>
+          <div style="font-size:10px;color:var(--ts);line-height:1.7;">• Processo trabalhista como réu/reclamado<br>• Processos criminais (ativos ou arquivados)<br>• Qualquer processo ativo<br>• 5+ ações trabalhistas<br>• Processo com assédio, dano moral, conduta<br>• Natcorp: baixa performance / não indicado<br>• Divergência entre plataformas</div>
+        </div>
+      </div>
+      <div>
+        <div id="lex-result">
+          <div class="ai-zone" style="padding:32px 20px;">
+            <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.3" viewBox="0 0 24 24" style="display:block;margin:0 auto 10px;color:var(--ts);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <p style="font-size:12px;color:var(--ts);text-align:center;">Preencha os dados ao lado e clique em<br><strong style="color:var(--tx);">Analisar com LexAnalyzer</strong></p>
+            <p style="font-size:10px;color:var(--tm);text-align:center;margin-top:6px;">O sistema aplicará automaticamente as regras de análise jurídica e emitirá o parecer</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTÓRICO -->
+  <div id="lex-hist-tab" style="display:none;">
+    <div class="tw"><table><thead><tr><th>Candidato</th><th>CPF</th><th>Vaga</th><th>Antecedentes</th><th>Referências</th><th>Docs</th><th>Parecer</th><th>Ações</th></tr></thead><tbody id="legal-table"></tbody></table></div>
+  </div>
+</div>
+
+<!-- ═════════ PLATAFORMAS ═════════════════════════════ -->
+<div id="view-plataformas" class="page">
+  <div class="ph"><div><div class="ph-t">Plataformas de Vagas</div><div class="ph-s">Gupy, Pandapé, LinkedIn e Indique &amp; Ganhe</div></div><div class="ph-acts"><button class="btn btn-p btn-sm">+ Sincronizar</button></div></div>
+  <div class="kgrid"><div class="kpi blue"><div class="kpi-lbl">Total candidatos</div><div class="kpi-val">247</div><div class="kpi-ch up">↑ 18% vs março</div></div><div class="kpi teal"><div class="kpi-lbl">Contratações plats.</div><div class="kpi-val">34</div></div><div class="kpi gold"><div class="kpi-lbl">Custo médio/hire</div><div class="kpi-val">R$12k</div></div><div class="kpi green"><div class="kpi-lbl">Taxa conversão</div><div class="kpi-val">3,8%</div></div></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;" id="plat-grid"></div>
+  <div class="divider"></div><div class="sec-t">Candidatos por plataforma — últimos 30 dias</div>
+  <div class="chart-card"><div style="position:relative;height:220px;"><canvas id="ch-plat" role="img" aria-label="Candidatos por plataforma"></canvas></div></div>
+</div>
+
+<!-- ═════════ CÉLULAS ═════════════════════════════════ -->
+<div id="view-celulas" class="page">
+  <div class="ph"><div><div class="ph-t">Células de Recrutamento</div><div class="ph-s">Equipes, performance e distribuição de vagas</div></div><div class="ph-acts"><button class="btn btn-p btn-sm">+ Nova Célula</button></div></div>
+  <div class="kgrid"><div class="kpi blue"><div class="kpi-lbl">Recrutadores ativos</div><div class="kpi-val">4</div></div><div class="kpi teal"><div class="kpi-lbl">Vagas em andamento</div><div class="kpi-val">23</div></div><div class="kpi gold"><div class="kpi-lbl">Média contrat./rec.</div><div class="kpi-val">2,1</div></div><div class="kpi purple"><div class="kpi-lbl">SLA médio</div><div class="kpi-val">74%</div></div></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;" id="celulas-grid"></div>
+</div>
+
+<!-- ═════════ PERFORMANCE ═════════════════════════════ -->
+<div id="view-performance" class="page">
+  <div class="ph"><div><div class="ph-t">Performance de R&S</div><div class="ph-s">Indicadores de eficiência do time de recrutamento</div></div><div class="ph-acts"><select class="fs"><option>Abril 2025</option><option>Q1 2025</option></select></div></div>
+  <div class="kgrid"><div class="kpi teal"><div class="kpi-lbl">Conversão</div><div class="kpi-val">3,2%</div><div class="kpi-ch up">↑ vs 2,8% meta</div></div><div class="kpi blue"><div class="kpi-lbl">Time-to-fill</div><div class="kpi-val">34d</div><div class="kpi-ch down">Meta: 28 dias</div></div><div class="kpi gold"><div class="kpi-lbl">Custo/hire</div><div class="kpi-val">R$18k</div><div class="kpi-ch up">↓ R$3k vs Q1</div></div><div class="kpi purple"><div class="kpi-lbl">Offer acceptance</div><div class="kpi-val">87%</div><div class="kpi-ch up">↑ 5pp</div></div><div class="kpi teal"><div class="kpi-lbl">Retenção 90d</div><div class="kpi-val">91%</div><div class="kpi-ch up">↑ 3pp vs 2024</div></div><div class="kpi amber"><div class="kpi-lbl">Vagas em SLA</div><div class="kpi-val">74%</div><div class="kpi-ch n">Meta: 80%</div></div></div>
+  <div class="g2"><div class="chart-card"><div class="ct">Funil de conversão</div><div style="position:relative;height:200px;"><canvas id="ch-funnel" role="img" aria-label="Funil de conversão"></canvas></div></div><div class="chart-card"><div class="ct">Tempo médio por etapa</div><div style="position:relative;height:200px;"><canvas id="ch-time" role="img" aria-label="Tempo por etapa"></canvas></div></div></div>
+  <div class="g2"><div class="chart-card"><div class="ct">Performance por recrutador</div><div style="position:relative;height:180px;"><canvas id="ch-rec" role="img" aria-label="Performance por recrutador"></canvas></div></div><div class="chart-card"><div class="ct">SLA por vaga</div><div style="position:relative;height:180px;"><canvas id="ch-sla" role="img" aria-label="SLA por vaga"></canvas></div></div></div>
+</div>
+
+<!-- ═════════ RELATÓRIOS ══════════════════════════════ -->
+<div id="view-relatorios" class="page">
+  <div class="ph"><div><div class="ph-t">Relatórios Gerenciais</div><div class="ph-s">Análises e indicadores estratégicos</div></div><div class="ph-acts"><select class="fs"><option>Abril 2025</option><option>Q1 2025</option></select><button class="btn btn-p btn-sm" onclick="showToast('Relatório gerado','success')">Gerar Relatório</button></div></div>
+  <div class="g2"><div class="chart-card"><div class="ct">Contratações por área</div><div style="position:relative;height:200px;"><canvas id="ch-dept" role="img" aria-label="Contratações por área"></canvas></div></div><div class="chart-card"><div class="ct">Diversidade &amp; Inclusão</div><div style="position:relative;height:200px;"><canvas id="ch-div" role="img" aria-label="Diversidade"></canvas></div></div></div>
+  <div class="chart-card" style="margin-bottom:10px;"><div class="ct">Headcount vs Meta 2025</div><div style="position:relative;height:180px;"><canvas id="ch-hc" role="img" aria-label="Headcount vs meta"></canvas></div></div>
+  <div class="sec-t">SLA por etapa</div><div class="tw" id="sla-wrap"></div>
+</div>
+
+<!-- ═════════ PAINEL EXECUTIVO ════════════════════════ -->
+<div id="view-exec-panel" class="page">
+  <div class="exec-bg">
+    <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:600;" id="exec-hi"></div>
+    <div style="font-size:11px;color:var(--ts);margin-top:2px;" id="exec-dt"></div>
+    <div style="margin-top:12px;display:flex;gap:7px;flex-wrap:wrap;">
+      <span class="badge bgold">2 propostas aguardando aprovação</span>
+      <span class="badge bred">1 vaga crítica sem candidato</span>
+      <span class="badge bteal">8 contratações · meta: 10</span>
+    </div>
+  </div>
+  <div class="kgrid"><div class="kpi gold"><div class="kpi-lbl">Budget R&S</div><div class="kpi-val">68%</div><div class="kpi-ch n">R$340k / R$500k</div></div><div class="kpi teal"><div class="kpi-lbl">Headcount</div><div class="kpi-val">47</div><div class="kpi-ch n">23 preenchidas</div></div><div class="kpi blue"><div class="kpi-lbl">Retenção 90d</div><div class="kpi-val">91%</div><div class="kpi-ch up">↑ 3pp</div></div><div class="kpi purple"><div class="kpi-lbl">Promoções int.</div><div class="kpi-val">34%</div><div class="kpi-ch up">vs 28% meta</div></div></div>
+  <div class="g2c" style="margin-bottom:12px;">
+    <div class="chart-card"><div class="ct">Headcount vs Meta 2025</div><div style="position:relative;height:180px;"><canvas id="ch-ep1" role="img" aria-label="Headcount vs meta"></canvas></div></div>
+    <div class="chart-card"><div class="ct">Custo por Hire por nível</div><div style="position:relative;height:180px;"><canvas id="ch-ep2" role="img" aria-label="Custo por hire"></canvas></div></div>
+  </div>
+  <div class="g2c">
+    <div><div class="sec-t">Aprovações pendentes</div><div id="ep-appr"></div></div>
+    <div><div class="sec-t">Vagas críticas</div><div id="ep-crit"></div></div>
+  </div>
+  <div class="divider"></div>
+  <div class="sec-t">Performance dos Gestores</div>
+  <div class="tw"><table><thead><tr><th>Gestor</th><th>Vagas ativas</th><th>Contratações</th><th>Time-to-fill</th><th>SLA</th><th>Status</th></tr></thead><tbody id="ep-mgr"></tbody></table></div>
+</div>
+
+<!-- ═════════ AUDITORIA ═══════════════════════════════ -->
+<div id="view-auditoria" class="page">
+  <div class="ph"><div><div class="ph-t">Trilha de Auditoria</div><div class="ph-s">Registro completo de ações</div></div><div class="ph-acts"><button class="btn btn-g btn-sm" onclick="showToast('Log exportado','success')">Exportar CSV</button></div></div>
+  <div class="filters"><select class="fs"><option>Todas as ações</option><option>Criação</option><option>Edição</option><option>Login</option><option>Aprovação</option></select><select class="fs"><option>Todos usuários</option><option>Ana Lima</option><option>Fernanda Costa</option><option>Carlos Mendes</option></select><input class="fi" type="date" style="width:130px;"></div>
+  <div class="card" style="padding:0 14px;"><div id="audit-log"></div></div>
+</div>
+
+<!-- ═════════ CONFIGURAÇÕES ═══════════════════════════ -->
+<div id="view-configuracoes" class="page">
+  <div class="ph"><div><div class="ph-t">Configurações</div><div class="ph-s">Preferências e configurações do sistema</div></div></div>
+  <div class="g2c" style="align-items:start;">
+    <div class="card"><div style="font-size:10px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--bd);">Aparência</div>
+      <div class="irow" style="align-items:center;"><span class="ilbl">Tema da interface</span><div class="theme-btn" onclick="toggleTheme()" style="margin-left:auto;"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="12" height="12"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg><span id="cfg-theme-txt">Claro</span></div></div>
+      <div class="irow" style="align-items:center;"><span class="ilbl">Idioma</span><select class="fs" style="margin-left:auto;"><option>Português (BR)</option><option>English</option></select></div>
+      <div style="font-size:10px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:.08em;margin:16px 0 10px;padding-top:12px;border-top:1px solid var(--bd);">Notificações</div>
+      <div class="irow" style="align-items:center;"><div><div style="font-size:12px;font-weight:500;">Novas candidaturas</div><div style="font-size:10px;color:var(--ts);">Ao receber inscrições</div></div><label class="toggle" style="margin-left:auto;"><input type="checkbox" checked><div class="tgl-tr"></div><div class="tgl-th"></div></label></div>
+      <div class="irow" style="align-items:center;"><div><div style="font-size:12px;font-weight:500;">Lembretes de entrevista</div><div style="font-size:10px;color:var(--ts);">1h antes</div></div><label class="toggle" style="margin-left:auto;"><input type="checkbox" checked><div class="tgl-tr"></div><div class="tgl-th"></div></label></div>
+      <div class="irow" style="align-items:center;"><div><div style="font-size:12px;font-weight:500;">Relatórios semanais</div></div><label class="toggle" style="margin-left:auto;"><input type="checkbox" checked><div class="tgl-tr"></div><div class="tgl-th"></div></label></div>
+    </div>
+    <div class="card"><div style="font-size:10px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--bd);">Integrações</div>
+      <div class="irow" style="align-items:center;"><div><div style="font-size:12px;font-weight:500;">Claude AI (Análise de CV)</div><div style="font-size:10px;color:var(--ts);">claude-sonnet-4 · Conectado</div></div><span class="badge bteal" style="margin-left:auto;">Ativo</span></div>
+      <div class="irow" style="align-items:center;"><div><div style="font-size:12px;font-weight:500;">Gupy</div><div style="font-size:10px;color:var(--ts);">ATS externo</div></div><label class="toggle" style="margin-left:auto;"><input type="checkbox" checked><div class="tgl-tr"></div><div class="tgl-th"></div></label></div>
+      <div class="irow" style="align-items:center;"><div><div style="font-size:12px;font-weight:500;">Pandapé</div></div><label class="toggle" style="margin-left:auto;"><input type="checkbox" checked><div class="tgl-tr"></div><div class="tgl-th"></div></label></div>
+      <div class="irow" style="align-items:center;"><div><div style="font-size:12px;font-weight:500;">LinkedIn Recruiter</div></div><label class="toggle" style="margin-left:auto;"><input type="checkbox"><div class="tgl-tr"></div><div class="tgl-th"></div></label></div>
+      <div style="font-size:10px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:.08em;margin:16px 0 10px;padding-top:12px;border-top:1px solid var(--bd);">Controle de Acesso</div>
+      <div class="tw"><table><thead><tr><th>Usuário</th><th>Perfil</th><th>Acesso</th></tr></thead><tbody>
+        <tr><td>Ana Lima</td><td><span class="badge bgold">Ger. Executiva R&S</span></td><td><button class="btn btn-g btn-sm">Editar</button></td></tr>
+        <tr><td>Fernanda Costa</td><td><span class="badge bblue">Gerente</span></td><td><button class="btn btn-g btn-sm">Editar</button></td></tr>
+        <tr><td>Carlos Mendes</td><td><span class="badge bteal">Recrutador</span></td><td><button class="btn btn-g btn-sm">Editar</button></td></tr>
+        <tr><td>Roberto Farias</td><td><span class="badge bpurple">Técnico</span></td><td><button class="btn btn-g btn-sm">Editar</button></td></tr>
+      </tbody></table></div>
+    </div>
+  </div>
+</div>
+
+    </main>
+  </div>
+</div>
+
+<!-- MODAL CANDIDATO -->
+<div class="mov" id="cand-modal">
+  <div class="modal">
+    <div class="mhd"><div class="sb-av" id="m-av" style="width:42px;height:42px;font-size:14px;flex-shrink:0;border:none;"></div><div><div style="font-size:16px;font-weight:600;" id="m-name"></div><div style="font-size:11px;color:var(--ts);" id="m-role"></div><div style="margin-top:4px;display:flex;gap:4px;" id="m-badges"></div></div><button class="mcl" onclick="closeModal('cand-modal')">×</button></div>
+    <div class="mbdy"><div class="mtabs"><div class="mtab active" onclick="stab(this,'t-ov')">Geral</div><div class="mtab" onclick="stab(this,'t-cv')">Currículo</div><div class="mtab" onclick="stab(this,'t-sc')">Avaliações</div><div class="mtab" onclick="stab(this,'t-hi')">Histórico</div></div>
+    <div id="t-ov" class="tc"></div><div id="t-cv" class="tc" style="display:none;"></div><div id="t-sc" class="tc" style="display:none;"></div><div id="t-hi" class="tc" style="display:none;"></div></div>
+  </div>
+</div>
+
+<!-- MODAL CONVITE -->
+<div class="mov" id="inv-modal">
+  <div class="modal" style="max-width:480px;">
+    <div class="mhd"><div><div style="font-size:16px;font-weight:600;">Enviar Convite</div><div style="font-size:11px;color:var(--ts);">Personalize e envie o convite</div></div><button class="mcl" onclick="closeModal('inv-modal')">×</button></div>
+    <div class="mbdy">
+      <div class="fld"><label>Candidato</label><select class="fi" style="width:100%;" id="inv-cand"><option>Selecionar...</option></select></div>
+      <div class="fld"><label>Tipo</label><select class="fi" style="width:100%;"><option>Entrevista Técnica — Presencial</option><option>Entrevista Técnica — Video</option><option>Banca Executiva</option><option>Case / Desafio</option><option>Painel com time</option></select></div>
+      <div class="g2c"><div class="fld"><label>Data</label><input type="date" style="width:100%;background:var(--sf);border:1px solid var(--bd2);border-radius:6px;padding:8px 10px;color:var(--tx);outline:none;"></div><div class="fld"><label>Horário</label><input type="time" value="14:00" style="width:100%;background:var(--sf);border:1px solid var(--bd2);border-radius:6px;padding:8px 10px;color:var(--tx);outline:none;"></div></div>
+      <div class="fld"><label>Mensagem</label><textarea style="width:100%;height:80px;background:var(--sf);border:1px solid var(--bd2);border-radius:6px;padding:8px 10px;color:var(--tx);outline:none;resize:none;font-size:12px;transition:background .25s;">Prezado(a) candidato(a), temos o prazer de convidá-lo(a) para a próxima etapa...</textarea></div>
+      <div style="display:flex;gap:6px;justify-content:flex-end;"><button class="btn btn-g" onclick="closeModal('inv-modal')">Cancelar</button><button class="btn btn-p" onclick="sendInvite()">Enviar</button></div>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   DATA & CONFIG
+══════════════════════════════════════════════════════ */
+const ROLES={
+  recruiter:{name:'Carlos Mendes',initials:'CM',label:'Recrutador Sênior',badge:'Recrutador',bc:'bteal',
+    nav:[
+      {sec:'Principal',items:[
+        {v:'dashboard',l:'Dashboard',icon:'grid'},{v:'curriculos',l:'Currículos',icon:'file',badge:'47',bc:'blue'},
+        {v:'talentos',l:'Talentos',icon:'users'},{v:'vagas',l:'Vagas',icon:'bag',badge:'23',bc:'gold'}
+      ]},
+      {sec:'Pipeline & Processo',items:[
+        {v:'pipeline',l:'Pipeline',icon:'flow'},{v:'entrevistas',l:'Entrevistas',icon:'cal',badge:'3',bc:'red'},
+        {v:'convites',l:'Convites Técnicos',icon:'mail'},{v:'comparativo',l:'Comparativo',icon:'chart'}
+      ]},
+      {sec:'Análise',items:[
+        {v:'cv-analysis',l:'Análise de CV — IA',icon:'ai',badge:'IA',bc:'teal'},
+        {v:'idiomas',l:'Idiomas & Entrevistas',icon:'globe'},{v:'perfis',l:'Análise de Perfis',icon:'person'},
+        {v:'executivos',l:'Perfis Executivos',icon:'star'},{v:'juridico',l:'Análise Jurídica',icon:'shield',badge:'3',bc:'red'}
+      ]}
+    ]
+  },
+  manager:{name:'Fernanda Costa',initials:'FC',label:'Gerente de RH',badge:'Gerente RH',bc:'bblue',
+    nav:[
+      {sec:'Principal',items:[
+        {v:'dashboard',l:'Dashboard',icon:'grid'},{v:'curriculos',l:'Currículos',icon:'file',badge:'47',bc:'blue'},
+        {v:'talentos',l:'Talentos',icon:'users'},{v:'vagas',l:'Vagas',icon:'bag',badge:'23',bc:'gold'}
+      ]},
+      {sec:'Pipeline & Processo',items:[
+        {v:'pipeline',l:'Pipeline',icon:'flow'},{v:'entrevistas',l:'Entrevistas',icon:'cal',badge:'3',bc:'red'},
+        {v:'convites',l:'Convites Técnicos',icon:'mail'},{v:'comparativo',l:'Comparativo',icon:'chart'}
+      ]},
+      {sec:'Análise',items:[
+        {v:'cv-analysis',l:'Análise de CV — IA',icon:'ai',badge:'IA',bc:'teal'},
+        {v:'idiomas',l:'Idiomas & Entrevistas',icon:'globe'},{v:'perfis',l:'Análise de Perfis',icon:'person'},
+        {v:'executivos',l:'Perfis Executivos',icon:'star'},{v:'juridico',l:'Análise Jurídica',icon:'shield',badge:'3',bc:'red'}
+      ]},
+      {sec:'Gestão da Equipe',items:[
+        {v:'plataformas',l:'Plataformas de Vagas',icon:'platform'},{v:'celulas',l:'Células de Recrutamento',icon:'team'},
+        {v:'performance',l:'Performance de R&S',icon:'perf'},{v:'relatorios',l:'Relatórios',icon:'report'},
+        {v:'auditoria',l:'Trilha de Auditoria',icon:'audit'},{v:'configuracoes',l:'Configurações',icon:'cfg'}
+      ]}
+    ]
+  },
+  director:{name:'Ana Lima',initials:'AL',label:'Gerente Executiva de R&S',badge:'Gerente Exec. R&S',bc:'bgold',
+    nav:[
+      {sec:'Principal',items:[
+        {v:'dashboard',l:'Dashboard',icon:'grid'},{v:'curriculos',l:'Currículos',icon:'file',badge:'47',bc:'blue'},
+        {v:'talentos',l:'Talentos',icon:'users'},{v:'vagas',l:'Vagas',icon:'bag',badge:'23',bc:'gold'}
+      ]},
+      {sec:'Pipeline & Processo',items:[
+        {v:'pipeline',l:'Pipeline',icon:'flow'},{v:'entrevistas',l:'Entrevistas',icon:'cal',badge:'3',bc:'red'},
+        {v:'convites',l:'Convites Técnicos',icon:'mail'},{v:'comparativo',l:'Comparativo',icon:'chart'}
+      ]},
+      {sec:'Análise',items:[
+        {v:'cv-analysis',l:'Análise de CV — IA',icon:'ai',badge:'IA',bc:'teal'},
+        {v:'idiomas',l:'Idiomas & Entrevistas',icon:'globe'},{v:'perfis',l:'Análise de Perfis',icon:'person'},
+        {v:'executivos',l:'Perfis Executivos',icon:'star'},{v:'juridico',l:'Análise Jurídica',icon:'shield',badge:'3',bc:'red'}
+      ]},
+      {sec:'Gestão da Equipe',items:[
+        {v:'plataformas',l:'Plataformas de Vagas',icon:'platform'},{v:'celulas',l:'Células de Recrutamento',icon:'team'},
+        {v:'performance',l:'Performance de R&S',icon:'perf'},{v:'relatorios',l:'Relatórios',icon:'report'},
+        {v:'auditoria',l:'Trilha de Auditoria',icon:'audit'},{v:'configuracoes',l:'Configurações',icon:'cfg'}
+      ]},
+      {sec:'Diretoria',items:[
+        {v:'exec-panel',l:'Painel Executivo',icon:'exec'}
+      ]}
+    ]
+  }
+};
+
+const TITLES={dashboard:['Dashboard R&S','Visão geral'],curriculos:['Currículos','Biblioteca e triagem'],talentos:['Banco de Talentos','Perfis de alto potencial'],vagas:['Vagas','Posições abertas'],pipeline:['Pipeline Kanban','Visão por etapas'],entrevistas:['Entrevistas','Agendamentos'],convites:['Convites Técnicos','Envio e acompanhamento'],comparativo:['Comparativo','Análise lado a lado'],'cv-analysis':['Análise de CV — IA','Análise com IA'],idiomas:['Idiomas & Entrevistas','Avaliação de proficiência'],perfis:['Análise de Perfis','DISC e fit cultural'],executivos:['Perfis Executivos','C-Level e liderança'],juridico:['Análise Jurídica','Background check'],plataformas:['Plataformas de Vagas','Gupy, Pandapé, LinkedIn e Indicações'],celulas:['Células de Recrutamento','Equipes e performance'],performance:['Performance de R&S','Indicadores de eficiência'],relatorios:['Relatórios','Indicadores gerenciais'],'exec-panel':['Painel Executivo','Visão estratégica — Gerente Exec. R&S'],auditoria:['Trilha de Auditoria','Registro de ações'],configuracoes:['Configurações','Preferências do sistema']};
+
+const AC=['rgba(201,151,58,.2)','rgba(59,122,245,.2)','rgba(30,197,160,.2)','rgba(139,92,246,.2)','rgba(226,75,74,.2)'];
+const AT=['#C9973A','#3B7AF5','#1EC5A0','#8B5CF6','#E24B4A'];
+
+const CANDS=[
+  {id:1,name:'Rafael Souza',ini:'RS',role:'Engenheiro Sênior Backend',area:'Tecnologia',stage:'Final',score:92,lang:'Inglês Fluente',origin:'LinkedIn',date:'03/04/2025',email:'rafael.souza@email.com',phone:'(11) 99234-5678',city:'São Paulo, SP',exp:9,edu:'Ciência da Computação — USP',skills:['Python','AWS','Kubernetes','Node.js'],legal:'Aprovado',ls:{sp:90,wr:88,li:95,re:92},disc:{D:72,I:58,S:45,C:80},plat:'LinkedIn',notes:'Candidato excelente, portfólio muito sólido em microsserviços.'},
+  {id:2,name:'Juliana Ferreira',ini:'JF',role:'Head de Marketing Digital',area:'Marketing',stage:'Proposta',score:88,lang:'Inglês Avançado',origin:'Indicação',date:'01/04/2025',email:'ju.ferreira@email.com',phone:'(21) 98765-4321',city:'Rio de Janeiro, RJ',exp:12,edu:'Administração — FGV',skills:['Growth','SEO','Analytics','Branding'],legal:'Aprovado',ls:{sp:85,wr:90,li:88,re:91},disc:{D:80,I:85,S:55,C:60},plat:'Indique & Ganhe',notes:'Perfil estratégico. Excelente histórico de crescimento de receita digital.'},
+  {id:3,name:'Thiago Almeida',ini:'TA',role:'CFO / Diretor Financeiro',area:'Financeiro',stage:'Entrevista RH',score:79,lang:'Inglês Fluente',origin:'Headhunter',date:'31/03/2025',email:'thiago.almeida@email.com',phone:'(11) 97654-3210',city:'São Paulo, SP',exp:18,edu:'Economia — PUC-SP | MBA — Insead',skills:['M&A','FP&A','Controladoria','BI'],legal:'Em análise',ls:{sp:82,wr:85,li:80,re:88},disc:{D:65,I:50,S:70,C:90},plat:'Gupy',notes:'Perfil sênior com passagem por multinacionais.'},
+  {id:4,name:'Camila Rodrigues',ini:'CR',role:'Tech Lead — Cloud',area:'Tecnologia',stage:'Técnica',score:95,lang:'Inglês Fluente',origin:'LinkedIn',date:'28/03/2025',email:'camila.r@email.com',phone:'(11) 91234-5678',city:'Campinas, SP',exp:11,edu:'Eng. Computação — Unicamp',skills:['AWS','Azure','Terraform','Docker'],legal:'Aprovado',ls:{sp:95,wr:92,li:96,re:94},disc:{D:75,I:65,S:55,C:85},plat:'LinkedIn',notes:'Score mais alto do pipeline. AWS Solutions Architect Pro.'},
+  {id:5,name:'Bruno Lima',ini:'BL',role:'Analista Comercial Sênior',area:'Comercial',stage:'Triagem',score:63,lang:'Inglês Intermediário',origin:'Site',date:'04/04/2025',email:'bruno.lima@email.com',phone:'(41) 98887-6543',city:'Curitiba, PR',exp:5,edu:'Administração — PUC-PR',skills:['CRM','Salesforce','Negociação'],legal:'Aprovado',ls:{sp:60,wr:65,li:68,re:70},disc:{D:55,I:75,S:65,C:50},plat:'Pandapé',notes:'Perfil promissor em vendas B2B. Idioma limitador.'},
+  {id:6,name:'Mariana Pinto',ini:'MP',role:'Product Manager',area:'Tecnologia',stage:'Final',score:87,lang:'Inglês Avançado',origin:'LinkedIn',date:'26/03/2025',email:'mariana.pinto@email.com',phone:'(11) 95432-1098',city:'São Paulo, SP',exp:7,edu:'Sistemas de Informação — Mackenzie',skills:['Roadmap','OKR','Agile','UX Research'],legal:'Aprovado',ls:{sp:88,wr:84,li:90,re:87},disc:{D:68,I:72,S:60,C:75},plat:'LinkedIn',notes:'PM em fintech com 2M de usuários.'},
+  {id:7,name:'Eduardo Castro',ini:'EC',role:'Head de Tecnologia',area:'Tecnologia',stage:'Proposta',score:91,lang:'Inglês Fluente',origin:'Headhunter',date:'25/03/2025',email:'eduardo.castro@email.com',phone:'(11) 93210-9876',city:'São Paulo, SP',exp:16,edu:'Engenharia — ITA | MBA — Wharton',skills:['Liderança','Cloud','Inovação','P&L'],legal:'Aprovado',ls:{sp:93,wr:91,li:94,re:96},disc:{D:88,I:70,S:45,C:82},plat:'Headhunter',notes:'Altíssimo nível para CTO. Saída amigável anterior.'},
+  {id:8,name:'Patrícia Santos',ini:'PS',role:'Gerente de Operações',area:'Operações',stage:'Entrevista RH',score:81,lang:'Espanhol',origin:'Indicação',date:'02/04/2025',email:'patricia.santos@email.com',phone:'(21) 94321-0987',city:'Rio de Janeiro, RJ',exp:14,edu:'Engenharia de Produção — UFMG',skills:['Lean','Six Sigma','Supply Chain','SAP'],legal:'Em análise',ls:{sp:80,wr:75,li:82,re:78},disc:{D:70,I:55,S:75,C:80},plat:'Indique & Ganhe',notes:'Lean Black Belt. Gestora experiente em transformação operacional.'},
+];
+
+const INTS=[
+  {c:'Camila Rodrigues',v:'Tech Lead Cloud',t:'Técnica — Presencial',dt:'08/04 10:00',int:'Roberto Farias',st:'Agendada',fb:'',day:'today'},
+  {c:'Rafael Souza',v:'Eng. Sênior Backend',t:'Banca Executiva',dt:'08/04 15:00',int:'Ana Lima',st:'Agendada',fb:'',day:'today'},
+  {c:'Juliana Ferreira',v:'Head de Marketing',t:'Painel com time',dt:'09/04 14:00',int:'Fernanda Costa',st:'Agendada',fb:'',day:'week'},
+  {c:'Eduardo Castro',v:'Head de Tecnologia',t:'Banca Executiva',dt:'10/04 09:00',int:'Ana Lima',st:'Agendada',fb:'',day:'week'},
+  {c:'Mariana Pinto',v:'Product Manager',t:'Técnica — Video',dt:'03/04 11:00',int:'Pedro Souza',st:'Realizada',fb:'Pendente',day:'done'},
+];
+
+const VAGAS_DATA=[
+  {t:'Engenheiro(a) Sênior Backend',a:'Tecnologia',n:'Sênior',loc:'São Paulo / Híbrido',c:14,m:30,urg:'Alta',st:'Ativa',prazo:'20/04'},
+  {t:'Head de Marketing Digital',a:'Marketing',n:'Liderança',loc:'Rio de Janeiro',c:8,m:20,urg:'Média',st:'Ativa',prazo:'30/04'},
+  {t:'CFO / Diretor Financeiro',a:'Financeiro',n:'C-Level',loc:'São Paulo',c:3,m:15,urg:'Alta',st:'Ativa',prazo:'15/04'},
+  {t:'Tech Lead — Cloud',a:'Tecnologia',n:'Sênior',loc:'Remoto',c:12,m:25,urg:'Alta',st:'Ativa',prazo:'25/04'},
+  {t:'VP de Vendas',a:'Comercial',n:'C-Level',loc:'São Paulo',c:0,m:15,urg:'Crítica',st:'Crítica',prazo:'15/04'},
+  {t:'Product Manager',a:'Tecnologia',n:'Pleno/Sênior',loc:'Híbrido',c:19,m:30,urg:'Baixa',st:'Ativa',prazo:'10/05'},
+];
+
+const LEGAL_D=[
+  {n:'Eduardo Castro',v:'Head Tecnologia',a:'Limpo',r:'Validadas',d:'OK',st:'Aprovado'},
+  {n:'Juliana Ferreira',v:'Head Marketing',a:'Limpo',r:'Validadas',d:'OK',st:'Aprovado'},
+  {n:'Thiago Almeida',v:'CFO',a:'Limpo',r:'Em andamento',d:'OK',st:'Em análise'},
+  {n:'Camila Rodrigues',v:'Tech Lead',a:'Limpo',r:'Validadas',d:'OK',st:'Aprovado'},
+  {n:'Rafael Souza',v:'Eng. Sênior',a:'Limpo',r:'Validadas',d:'OK',st:'Aprovado'},
+  {n:'Patrícia Santos',v:'Ger. Operações',a:'Limpo',r:'Em andamento',d:'Pendente',st:'Em análise'},
+];
+
+const LANG_D=[
+  {n:'Camila Rodrigues',l:'Inglês',lv:'C2 — Proficiente',sp:95,wr:92,li:96,re:94,sc:94,st:'Aprovada'},
+  {n:'Eduardo Castro',l:'Inglês',lv:'C2 — Proficiente',sp:93,wr:91,li:94,re:96,sc:94,st:'Aprovado'},
+  {n:'Rafael Souza',l:'Inglês',lv:'C1 — Avançado',sp:90,wr:88,li:95,re:92,sc:91,st:'Aprovado'},
+  {n:'Juliana Ferreira',l:'Inglês',lv:'C1 — Avançado',sp:85,wr:90,li:88,re:91,sc:89,st:'Aprovada'},
+  {n:'Thiago Almeida',l:'Inglês',lv:'B2 — Avançado',sp:82,wr:85,li:80,re:88,sc:84,st:'Aprovado'},
+  {n:'Patrícia Santos',l:'Espanhol',lv:'B2 — Intermediário',sp:80,wr:75,li:82,re:78,sc:79,st:'Aprovada'},
+  {n:'Bruno Lima',l:'Inglês',lv:'B1 — Intermediário',sp:60,wr:65,li:68,re:70,sc:66,st:'Atenção'},
+];
+
+const PLAT_D=[
+  {id:'indicacao',name:'Indique & Ganhe',desc:'Programa de indicações internas',icon:'🏆',class:'plat-indicacao',cands:38,conv:'7,2%',hired:11,custo:'R$4.200',active:6,color:'#C9973A'},
+  {id:'gupy',name:'Gupy',desc:'ATS integrado · 12 vagas ativas',icon:'G',class:'plat-gupy',cands:95,conv:'3,1%',hired:9,custo:'R$8.800',active:12,color:'#4338CA'},
+  {id:'pandape',name:'Pandapé',desc:'Plataforma RH · 7 vagas ativas',icon:'P',class:'plat-pandape',cands:64,conv:'2,8%',hired:6,custo:'R$9.500',active:7,color:'#FF6B35'},
+  {id:'linkedin',name:'LinkedIn Jobs',desc:'Rede profissional · 8 vagas ativas',icon:'in',class:'plat-linkedin',cands:50,conv:'4,0%',hired:8,custo:'R$14.200',active:8,color:'#0077B5'},
+];
+
+const CELULAS_D=[
+  {nome:'Célula Tech',icon:'💻',color:'var(--blue)',recrutadores:[{n:'Carlos Mendes',vagas:8,contrat:3,sla:'80%'},{n:'Roberto Farias',vagas:5,contrat:2,sla:'72%'}]},
+  {nome:'Célula Business',icon:'📊',color:'var(--gold)',recrutadores:[{n:'Fernanda Costa',vagas:7,contrat:2,sla:'78%'},{n:'Pedro Souza',vagas:3,contrat:1,sla:'68%'}]},
+];
+
+const AUDIT_LOG=[
+  {time:'08/04 17:42',icon:'✎',bg:'var(--blued)',c:'var(--blue)',a:'Candidato avançado para Proposta',d:'Eduardo Castro → Proposta · Ana Lima'},
+  {time:'08/04 17:10',icon:'✉',bg:'var(--teald)',c:'var(--teal)',a:'Convite técnico enviado',d:'Camila Rodrigues → Tech Lead · Carlos Mendes'},
+  {time:'08/04 16:55',icon:'⊕',bg:'var(--goldd)',c:'var(--gold)',a:'Nova candidatura recebida',d:'Bruno Lima → Analista Comercial · via Pandapé'},
+  {time:'08/04 15:30',icon:'AI',bg:'var(--purpled)',c:'var(--purple)',a:'Análise de CV executada',d:'Rafael Souza · Score: 92 · por Fernanda Costa'},
+  {time:'08/04 14:22',icon:'→',bg:'var(--amberd)',c:'var(--amber)',a:'Status atualizado',d:'Patrícia Santos: Triagem → Entrevista RH'},
+  {time:'08/04 13:10',icon:'✓',bg:'var(--teald)',c:'var(--teal)',a:'Background check aprovado',d:'Isabela Gomes · Análise Jurídica concluída'},
+  {time:'08/04 11:45',icon:'⊕',bg:'var(--goldd)',c:'var(--gold)',a:'Nova vaga criada',d:'VP de Vendas · Comercial · Fernanda Costa'},
+  {time:'08/04 09:02',icon:'→',bg:'var(--blued)',c:'var(--blue)',a:'Login realizado',d:'Ana Lima · Gerente Exec. R&S'},
+  {time:'07/04 18:30',icon:'✗',bg:'var(--redd)',c:'var(--red)',a:'Candidato reprovado',d:'Lucas Oliveira → Eng. Sênior · Roberto Farias'},
+];
+
+let isDark=true,currentRole='director',currentView='dashboard',allCharts={},cvHistory=[];
+// Register datalabels plugin; disable globally — enable only per-chart
+ChartDataLabels && Chart.register(ChartDataLabels);
+Chart.defaults.plugins.datalabels={display:false};
+
+/* ══ THEME ══════════════════════════════════════════ */
+function toggleTheme(){
+  isDark=!isDark;
+  document.documentElement.setAttribute('data-theme',isDark?'dark':'light');
+  const t=isDark?'Claro':'Escuro';
+  ['ttxt','ltxt','cfg-theme-txt'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=t;});
+  destroyCharts();setTimeout(()=>initCharts(currentView),60);
+}
+
+/* ══ SIDEBAR MOBILE ═════════════════════════════════ */
+function toggleSidebar(){const s=document.getElementById('sidebar'),o=document.getElementById('overlay');s.classList.toggle('open');o.classList.toggle('open');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('open');}
+
+/* ══ NAV ICONS ══════════════════════════════════════ */
+const ICONS={
+  grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  file:'<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/>',
+  users:'<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>',
+  bag:'<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>',
+  flow:'<path d="M3 6h18M7 12h10M11 18h2"/>',
+  cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  mail:'<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>',
+  chart:'<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+  ai:'<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>',
+  globe:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/>',
+  person:'<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  star:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+  shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+  platform:'<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
+  team:'<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>',
+  perf:'<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
+  report:'<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+  audit:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>',
+  cfg:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>',
+  exec:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>'
+};
+function icon(k){return`<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">${ICONS[k]||''}</svg>`;}
+
+/* ══ AUTH ═══════════════════════════════════════════ */
+function setRole(r){
+  currentRole=r;
+  document.querySelectorAll('.role-chip').forEach(c=>c.classList.remove('active'));
+  const map={recruiter:'Recrutador',manager:'Gerente',director:'Gerente Exec.'};
+  document.querySelectorAll('.role-chip').forEach(c=>{if(c.textContent.includes(map[r]))c.classList.add('active');});
+  document.getElementById('l-role').value=r;
+  const emails={recruiter:'carlos.mendes@empresa.com.br',manager:'fernanda.costa@empresa.com.br',director:'ana.lima@empresa.com.br'};
+  document.getElementById('l-email').value=emails[r];
+}
+
+async function doLoginReal() {
+    const email = document.getElementById('l-email').value.trim();
+    const password = prompt('Senha:', '');
+    if (!password) return doLogin();
+    try {
+        const result = await API.post('/auth/login', { email, password });
+        AUTH_TOKEN = result.access_token;
+        localStorage.setItem('talentos_token', AUTH_TOKEN);
+        currentRole = result.user.role === 'executive' ? 'director' : result.user.role;
+        document.getElementById('sb-av').textContent = result.user.initials;
+        document.getElementById('sb-uname').textContent = result.user.name;
+        document.getElementById('sb-urole').textContent = result.user.role;
+        buildNav(); document.getElementById('login').style.display='none';
+        document.getElementById('app').classList.add('visible');
+        initExecPanel(); renderAll(); setTimeout(()=>initCharts('dashboard'),100);
+        showToast('Bem-vindo(a), ' + result.user.name.split(' ')[0] + '!', 'success');
+    } catch (e) {
+        showToast('Erro de login: ' + e.message, 'error');
+        doLogin(); // fallback demo mode
+    }
+}
+
+function doLogin(){
+  currentRole=document.getElementById('l-role').value;
+  const u=ROLES[currentRole];
+  document.getElementById('sb-av').textContent=u.initials;
+  document.getElementById('sb-uname').textContent=u.name;
+  document.getElementById('sb-urole').textContent=u.label;
+  buildNav();
+  document.getElementById('login').style.display='none';
+  document.getElementById('app').classList.add('visible');
+  initExecPanel();renderAll();
+  setTimeout(()=>initCharts('dashboard'),100);
+  showToast('Bem-vindo(a), '+u.name.split(' ')[0]+'!','success');
+}
+function logout(){document.getElementById('app').classList.remove('visible');document.getElementById('login').style.display='flex';closeSidebar();}
+setRole('director');
+
+/* ══ NAV BUILD ══════════════════════════════════════ */
+function buildNav(){
+  const nav=document.getElementById('sb-nav');
+  const role=ROLES[currentRole];
+  nav.innerHTML=role.nav.map(sec=>`
+    <div class="sb-sec">${sec.sec}</div>
+    ${sec.items.map(it=>`<div class="ni" data-view="${it.v}" onclick="nav(this)">${icon(it.icon)}<span class="nl">${it.l}</span>${it.badge?`<span class="nb ${it.bc||'red'}">${it.badge}</span>`:''}</div>`).join('')}
+  `).join('');
+  // activate first item
+  const first=nav.querySelector('.ni');
+  if(first){first.classList.add('active');}
+}
+function nav(el){
+  closeSidebar();
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  const v=el.dataset.view;currentView=v;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const pg=document.getElementById('view-'+v);
+  if(pg)pg.classList.add('active');
+  const t=TITLES[v]||[v,''];
+  document.getElementById('tb-title').textContent=t[0];
+  document.getElementById('tb-sub').textContent=t[1];
+  if(v==='comparativo')initComp();
+  if(v==='plataformas')setTimeout(()=>initCharts('plataformas'),80);
+  if(v==='performance')setTimeout(()=>initCharts('performance'),80);
+  if(v==='relatorios')setTimeout(()=>initCharts('relatorios'),80);
+  if(v==='exec-panel')setTimeout(()=>initCharts('exec-panel'),80);
+  if(v==='idiomas')setTimeout(()=>initCharts('idiomas'),80);
+}
+function gSearch(v){if(!v)return;const it=document.querySelector('[data-view=curriculos]');if(it)nav(it);}
+
+/* ══ RENDER ALL ═════════════════════════════════════ */
+function renderAll(){
+  renderDashKpis();renderDashTable();filterTable();renderPipeline();
+  renderInts();renderVagas();renderTalentos();renderExecCards();renderPerfis();
+  renderLegal();renderLang();renderConvites();renderPlataformas();renderCelulas();
+  renderAudit();renderExecPanel();renderCVHist();
+}
+
+/* ══ DASH ═══════════════════════════════════════════ */
+function renderDashKpis(){
+  const now=new Date();
+  document.getElementById('d-date').textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('dash-kpis').innerHTML=`
+    <div class="kpi gold"><div class="kpi-lbl">Vagas Abertas</div><div class="kpi-val">23</div><div class="kpi-ch up">↑ 4 novas</div></div>
+    <div class="kpi blue"><div class="kpi-lbl">Candidatos Ativos</div><div class="kpi-val">247</div><div class="kpi-ch up">↑ 31 esta semana</div></div>
+    <div class="kpi teal"><div class="kpi-lbl">Contratações/mês</div><div class="kpi-val">8</div><div class="kpi-ch up">↑ 2 vs março</div></div>
+    <div class="kpi gold"><div class="kpi-lbl">Tempo Médio (dias)</div><div class="kpi-val">34</div><div class="kpi-ch down">↓ 6 dias</div></div>
+    <div class="kpi purple"><div class="kpi-lbl">NPS Candidatos</div><div class="kpi-val">72</div><div class="kpi-ch up">↑ 5 pts</div></div>
+    <div class="kpi amber"><div class="kpi-lbl">Análises IA hoje</div><div class="kpi-val">18</div><div class="kpi-ch n">Score médio: 78</div></div>`;
+}
+function renderDashTable(){
+  document.getElementById('dash-table').innerHTML=CANDS.slice(0,7).map(c=>`<tr><td><div style="display:flex;align-items:center;gap:7px;"><div class="av" style="background:${AC[c.id%5]};color:${AT[c.id%5]};">${c.ini}</div><span class="tdp">${c.name}</span></div></td><td style="color:var(--ts);">${c.role.slice(0,22)}...</td><td>${sb(c.stage)}</td><td><span style="font-weight:600;color:${sc(c.score)};">${c.score}</span></td><td style="color:var(--ts);">${c.date}</td><td><button class="btn btn-g btn-sm" onclick="openCand(${c.id})">Ver</button></td></tr>`).join('');
+}
+
+/* ══ FILTER TABLE ═══════════════════════════════════ */
+function filterTable(){
+  const s=(document.getElementById('cv-s')||{value:''}).value.toLowerCase();
+  const st=(document.getElementById('cvf-st')||{value:''}).value;
+  const ar=(document.getElementById('cvf-ar')||{value:''}).value;
+  const sc2=(document.getElementById('cvf-sc')||{value:''}).value;
+  const list=CANDS.filter(c=>{
+    if(s&&!c.name.toLowerCase().includes(s)&&!c.role.toLowerCase().includes(s))return false;
+    if(st&&c.stage!==st)return false;
+    if(ar&&c.area!==ar)return false;
+    if(sc2==='h'&&c.score<80)return false;
+    if(sc2==='m'&&(c.score<60||c.score>=80))return false;
+    if(sc2==='l'&&c.score>=60)return false;
+    return true;
+  });
+  const el=document.getElementById('cv-table');
+  if(!el)return;
+  el.innerHTML=list.map(c=>`<tr>
+    <td><input type="checkbox"></td>
+    <td><div style="display:flex;align-items:center;gap:7px;"><div class="av" style="background:${AC[c.id%5]};color:${AT[c.id%5]};">${c.ini}</div><div><div class="tdp">${c.name}</div><div style="font-size:10px;color:var(--ts);">${c.city}</div></div></div></td>
+    <td><div class="tdp">${c.role.slice(0,24)}</div><span class="badge bg" style="font-size:9px;">${c.area}</span></td>
+    <td>${sb(c.stage)}</td>
+    <td><div style="display:flex;align-items:center;gap:4px;"><div style="width:32px;height:3px;background:var(--bd);border-radius:2px;overflow:hidden;"><div style="width:${c.score}%;height:100%;background:${sc(c.score)};border-radius:2px;"></div></div><span style="font-size:10px;font-weight:700;color:${sc(c.score)};">${c.score}</span></div></td>
+    <td><span class="badge bblue" style="font-size:9px;">${c.lang}</span></td>
+    <td style="color:var(--ts);">${c.date}</td>
+    <td><div style="display:flex;gap:3px;">
+      <button class="btn btn-g btn-sm btn-ic" onclick="openCand(${c.id})" title="Ver"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      <button class="btn btn-t btn-sm btn-ic" onclick="openInviteModal()" title="Convidar"><svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></button>
+    </div></td></tr>`).join('');
+  const cnt=document.getElementById('cv-cnt');
+  if(cnt)cnt.textContent=`${list.length} currículos`;
+}
+
+/* ══ PIPELINE ═══════════════════════════════════════ */
+function renderPipeline(){
+  const stages=[{n:'Triagem',c:'#3B7AF5'},{n:'Entrevista RH',c:'#8B5CF6'},{n:'Técnica',c:'#F59E0B'},{n:'Final',c:'#1EC5A0'},{n:'Proposta',c:'#C9973A'},{n:'Reprovado',c:'#E24B4A'}];
+  document.getElementById('pipeline-board').innerHTML=stages.map(s=>{
+    const items=CANDS.filter(c=>c.stage===s.n);
+    return`<div class="pc"><div class="pc-hd"><span class="dot" style="background:${s.c};"></span><span class="lbl">${s.n}</span><span class="cnt">${items.length}</span></div>
+    <div class="pc-body">${items.map(c=>`<div class="pk" onclick="openCand(${c.id})"><div class="pn">${c.name}</div><div class="pr">${c.area} · ★ ${c.score}</div></div>`).join('')||'<div style="font-size:10px;color:var(--tm);text-align:center;padding:8px;">Vazio</div>'}</div></div>`;
+  }).join('');
+}
+
+/* ══ INTERVIEWS ═════════════════════════════════════ */
+function renderInts(){
+  const mc=i=>`<div style="padding:6px 8px;background:var(--card2);border:1px solid var(--bd);border-radius:5px;margin-bottom:4px;"><div style="font-size:11px;font-weight:600;">${i.c}</div><div style="font-size:9px;color:var(--ts);">${i.t} · ${i.dt.split(' ')[1]}</div></div>`;
+  const today=INTS.filter(i=>i.day==='today'),week=INTS.filter(i=>i.day==='week'),fb=INTS.filter(i=>i.fb==='Pendente');
+  document.getElementById('int-today').innerHTML=today.length?today.map(mc).join(''):'<div style="font-size:10px;color:var(--tm);">Nenhuma hoje</div>';
+  document.getElementById('int-week').innerHTML=week.length?week.map(mc).join(''):'<div style="font-size:10px;color:var(--tm);">Nenhuma</div>';
+  document.getElementById('int-feedback').innerHTML=fb.length?fb.map(mc).join(''):'<div style="font-size:10px;color:var(--tm);">Nenhum</div>';
+  const stb=s=>({Agendada:'bblue',Realizada:'bteal',Reprovado:'bred'}[s]||'bg');
+  document.getElementById('int-table').innerHTML=INTS.map(i=>`<tr><td class="tdp">${i.c}</td><td style="color:var(--ts);">${i.v}</td><td><span class="badge bg" style="font-size:9px;">${i.t}</span></td><td>${i.dt}</td><td><span class="badge ${stb(i.st)}">${i.st}</span></td><td><button class="btn btn-g btn-sm" onclick="showToast('Ação registrada','info')">Ação</button></td></tr>`).join('');
+}
+
+/* ══ VAGAS ══════════════════════════════════════════ */
+function renderVagas(){
+  document.getElementById('vagas-grid').innerHTML=VAGAS_DATA.map(v=>`
+    <div class="card"><div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;"><div><div style="font-size:13px;font-weight:600;">${v.t}</div><div style="font-size:10px;color:var(--ts);">${v.a} · ${v.n}</div></div><span class="badge ${v.st==='Crítica'?'bred':v.urg==='Alta'?'bamber':'bteal'}">${v.st==='Crítica'?'CRÍTICA':v.urg}</span></div>
+    <div style="height:3px;background:var(--bd);border-radius:2px;overflow:hidden;margin:8px 0 5px;"><div style="width:${Math.round(v.c/v.m*100)}%;height:100%;background:${v.c===0?'var(--red)':'var(--gold)'};border-radius:2px;"></div></div>
+    <div style="font-size:9px;color:var(--ts);margin-bottom:8px;">${v.c}/${v.m} candidatos · ${Math.round(v.c/v.m*100)}%</div>
+    <div style="font-size:10px;color:var(--ts);display:flex;gap:8px;">📍 ${v.loc} &nbsp;⏰ ${v.prazo}</div>
+    <div style="display:flex;gap:5px;margin-top:10px;"><button class="btn btn-g btn-sm" style="flex:1;justify-content:center;">Candidatos</button><button class="btn btn-p btn-sm" style="flex:1;justify-content:center;" onclick="showToast('Vaga aberta para edição','info')">Editar</button></div></div>`).join('');
+}
+
+/* ══ TALENTOS ═══════════════════════════════════════ */
+function renderTalentos(){
+  const t=[{n:'André Martins',a:'Tecnologia',r:'Arquiteto de Soluções',s:89,av:'Imediato',l:'Inglês Fluente'},{n:'Sofia Carvalho',a:'Marketing',r:'Head de Produto',s:84,av:'30 dias',l:'Inglês Avançado'},{n:'Diego Ramos',a:'Financeiro',r:'Controller',s:80,av:'60 dias',l:'Inglês Avançado'},{n:'Lara Mendes',a:'RH',r:'HRBP Sênior',s:77,av:'Imediato',l:'Inglês Básico'},{n:'Felipe Nunes',a:'Tecnologia',r:'Data Scientist',s:92,av:'30 dias',l:'Inglês Fluente'},{n:'Amanda Freitas',a:'Comercial',r:'Key Account Manager',s:73,av:'60 dias',l:'Espanhol'}];
+  document.getElementById('talent-grid').innerHTML=t.map((x,i)=>`<div class="card" style="display:flex;gap:8px;align-items:flex-start;"><div class="av" style="width:34px;height:34px;font-size:12px;background:${AC[i%5]};color:${AT[i%5]};flex-shrink:0;">${x.n.split(' ').map(w=>w[0]).join('').slice(0,2)}</div><div style="flex:1;"><div style="font-size:12px;font-weight:600;">${x.n}</div><div style="font-size:10px;color:var(--ts);">${x.r} · ${x.a}</div><div style="display:flex;gap:4px;margin-top:5px;flex-wrap:wrap;"><span class="badge bg" style="font-size:9px;">${x.av}</span><span class="badge bblue" style="font-size:9px;">${x.l}</span><span style="font-size:10px;font-weight:600;color:${sc(x.s)};">★ ${x.s}</span></div></div><button class="btn btn-g btn-sm" onclick="showToast('Contato iniciado','info')">Contatar</button></div>`).join('');
+}
+
+/* ══ EXEC CARDS ═════════════════════════════════════ */
+function renderExecCards(){
+  const p=[{n:'Eduardo Castro',r:'Head de Tecnologia / CTO',s:91,rk:'Baixo',comp:'R$45k/mês',av:'30 dias',hi:['MBA Wharton','Liderou IPO XP','Scale-up'],st:'Proposta'},{n:'Juliana Ferreira',r:'Head de Marketing / CMO',s:88,rk:'Baixo',comp:'R$32k/mês',av:'60 dias',hi:['10+ anos growth','Ex-Nubank'],st:'Proposta'},{n:'Thiago Almeida',r:'CFO / Diretor Financeiro',s:79,rk:'Médio',comp:'R$52k/mês',av:'90 dias',hi:['18 anos mercado','CFA Cert.'],st:'Entrevista RH'}];
+  document.getElementById('exec-cards').innerHTML=p.map(x=>`<div class="card" style="border-top:3px solid var(--gold);"><div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;"><div class="av" style="width:36px;height:36px;font-size:13px;background:var(--goldd);color:var(--gold);flex-shrink:0;">${x.n.split(' ').map(w=>w[0]).join('').slice(0,2)}</div><div><div style="font-size:13px;font-weight:600;">${x.n}</div><div style="font-size:10px;color:var(--ts);">${x.r}</div></div><div style="margin-left:auto;">${sb(x.st)}</div></div>
+  <div class="irow"><span class="ilbl">Score</span><span class="ival" style="font-weight:700;color:${sc(x.s)};">${x.s}/100</span></div>
+  <div class="irow"><span class="ilbl">Risco</span><span class="ival"><span class="badge ${x.rk==='Baixo'?'bteal':'bamber'}">${x.rk}</span></span></div>
+  <div class="irow"><span class="ilbl">Pretensão</span><span class="ival" style="font-weight:600;">${x.comp}</span></div>
+  <div style="font-size:9px;color:var(--ts);text-transform:uppercase;letter-spacing:.07em;font-weight:700;margin-top:10px;margin-bottom:5px;">Destaques</div>
+  ${x.hi.map(h=>`<div style="font-size:11px;margin-bottom:2px;">• ${h}</div>`).join('')}
+  <div style="display:flex;gap:5px;margin-top:10px;"><button class="btn btn-g btn-sm" style="flex:1;justify-content:center;" onclick="showToast('Relatório gerado','info')">Relatório</button><button class="btn btn-p btn-sm" style="flex:1;justify-content:center;" onclick="showToast('Proposta enviada!','success')">Avançar</button></div></div>`).join('');
+}
+
+/* ══ PERFIS DISC ════════════════════════════════════ */
+function renderPerfis(){
+  const DC={D:'#E24B4A',I:'#F59E0B',S:'#1EC5A0',C:'#3B7AF5'};
+  document.getElementById('perfis-grid').innerHTML=CANDS.slice(0,6).map(c=>`<div class="card"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><div class="av" style="width:34px;height:34px;font-size:11px;background:${AC[c.id%5]};color:${AT[c.id%5]};">${c.ini}</div><div><div style="font-size:12px;font-weight:600;">${c.name}</div><div style="font-size:10px;color:var(--ts);">${c.role.slice(0,28)}</div></div><span class="badge bg" style="margin-left:auto;font-size:9px;">${c.area}</span></div>
+  <div style="font-size:9px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px;">Perfil DISC</div>
+  ${['D','I','S','C'].map(d=>`<div class="disc-b"><span class="disc-lbl" style="color:${DC[d]};">${d}</span><div class="disc-tr"><div class="disc-fi" style="width:${c.disc[d]}%;background:${DC[d]};">${c.disc[d]}</div></div></div>`).join('')}
+  <div style="display:flex;gap:4px;margin-top:8px;"><span class="badge bteal" style="font-size:9px;">Fit: ${Math.round((c.disc.D+c.disc.I)/2)}%</span><span class="badge bblue" style="font-size:9px;">Score: ${c.score}</span></div></div>`).join('');
+}
+
+/* ══ LEGAL ══════════════════════════════════════════ */
+function renderLegal(){
+  const ob=v=>['OK','Limpo','Verificado','Validadas'].includes(v)?`<span class="badge bteal" style="font-size:9px;">${v}</span>`:`<span class="badge bamber" style="font-size:9px;">${v}</span>`;
+  const ls=s=>({Aprovado:'bteal','Em análise':'bamber',Reprovado:'bred'}[s]||'bg');
+  const el=document.getElementById('legal-table');
+  if(!el)return;
+  el.innerHTML=LEGAL_D.map(l=>`<tr><td class="tdp">${l.n}</td><td style="color:var(--ts);">${l.v}</td><td>${ob(l.a)}</td><td>${ob(l.r)}</td><td>${ob(l.d)}</td><td><span class="badge ${ls(l.st)}">${l.st}</span></td><td><button class="btn btn-g btn-sm" onclick="showToast('Relatório jurídico aberto','info')">Ver</button></td></tr>`).join('');
+}
+
+/* ══ LANG ═══════════════════════════════════════════ */
+function renderLang(){
+  const bar=(v,c)=>`<div style="display:flex;align-items:center;gap:4px;"><div style="width:38px;height:3px;background:var(--bd);border-radius:2px;overflow:hidden;"><div style="width:${v}%;height:100%;background:${c};border-radius:2px;"></div></div><span style="font-size:10px;">${v}</span></div>`;
+  document.getElementById('lang-table').innerHTML=LANG_D.map(l=>`<tr><td class="tdp">${l.n}</td><td><span class="badge bblue" style="font-size:9px;">${l.l}</span></td><td style="font-size:11px;font-weight:500;">${l.lv}</td><td>${bar(l.sp,'#1EC5A0')}</td><td><span style="font-weight:600;color:${sc(l.sc)};">${l.sc}</span></td><td><span class="badge ${l.st.includes('Aprov')?'bteal':'bamber'}">${l.st}</span></td></tr>`).join('');
+  document.getElementById('lang-list').innerHTML=LANG_D.slice(0,4).map(l=>`<div style="display:flex;align-items:center;gap:7px;padding:7px 0;border-bottom:1px solid var(--bd);"><div class="av" style="background:var(--blued);color:var(--blue);font-size:10px;">${l.n.split(' ').map(w=>w[0]).join('').slice(0,2)}</div><div><div style="font-size:12px;font-weight:500;">${l.n}</div><div style="font-size:10px;color:var(--ts);">${l.l} · ${l.lv}</div></div><span class="badge ${l.st.includes('Aprov')?'bteal':'bamber'}" style="margin-left:auto;font-size:9px;">${l.st}</span></div>`).join('');
+}
+
+/* ══ CONVITES ═══════════════════════════════════════ */
+function renderConvites(){
+  const data=[{c:'Camila Rodrigues',v:'Tech Lead Cloud',t:'Técnica',en:'07/04',st:'Aceito'},{c:'Rafael Souza',v:'Eng. Sênior',t:'Banca Exec.',en:'07/04',st:'Aceito'},{c:'Eduardo Castro',v:'Head Tecnologia',t:'Banca Exec.',en:'06/04',st:'Aceito'},{c:'Mariana Pinto',v:'Product Manager',t:'Video',en:'05/04',st:'Aguardando'},{c:'Bruno Lima',v:'Analista Comercial',t:'RH',en:'04/04',st:'Aguardando'},{c:'Lucas Oliveira',v:'Eng. Sênior',t:'Video',en:'28/03',st:'Recusado'}];
+  const st=s=>({Aceito:'bteal',Aguardando:'bamber',Recusado:'bred'}[s]||'bg');
+  document.getElementById('convites-table').innerHTML=data.map(c=>`<tr><td class="tdp">${c.c}</td><td style="color:var(--ts);">${c.v}</td><td><span class="badge bg" style="font-size:9px;">${c.t}</span></td><td>${c.en}</td><td><span class="badge ${st(c.st)}">${c.st}</span></td><td><button class="btn btn-g btn-sm" onclick="showToast('Ação para ${c.c}','info')">Ver</button></td></tr>`).join('');
+}
+
+/* ══ PLATAFORMAS ════════════════════════════════════ */
+function renderPlataformas(){
+  const el=document.getElementById('plat-grid');
+  if(!el)return;
+  el.innerHTML=PLAT_D.map(p=>`
+    <div class="plat-card ${p.class}">
+      <div class="plat-icon" style="background:${p.color}22;color:${p.color};font-style:${p.id==='gupy'||p.id==='pandape'||p.id==='linkedin'?'normal':'normal'};">${p.icon}</div>
+      <div class="plat-name">${p.name}</div>
+      <div class="plat-desc">${p.desc}</div>
+      <div class="plat-stats">
+        <div class="plat-stat"><div class="ps-val" style="color:${p.color};">${p.cands}</div><div class="ps-lbl">Candidatos</div></div>
+        <div class="plat-stat"><div class="ps-val" style="color:var(--teal);">${p.hired}</div><div class="ps-lbl">Contratados</div></div>
+        <div class="plat-stat"><div class="ps-val" style="color:var(--gold);">${p.conv}</div><div class="ps-lbl">Conversão</div></div>
+        <div class="plat-stat"><div class="ps-val" style="font-size:13px;">${p.custo}</div><div class="ps-lbl">Custo/hire</div></div>
+      </div>
+      <div style="display:flex;gap:5px;"><button class="btn btn-g btn-sm" style="flex:1;justify-content:center;" onclick="showToast('Sincronizando ${p.name}...','info')">Sincronizar</button><button class="btn btn-p btn-sm" style="flex:1;justify-content:center;" onclick="showToast('${p.name} aberto','info')">Abrir</button></div>
+    </div>`).join('');
+}
+
+/* ══ CÉLULAS ════════════════════════════════════════ */
+function renderCelulas(){
+  const el=document.getElementById('celulas-grid');
+  if(!el)return;
+  el.innerHTML=CELULAS_D.map(cel=>`
+    <div class="celula-card" style="border-top:3px solid ${cel.color};">
+      <div class="cel-header"><div class="cel-icon" style="background:${cel.color}20;">${cel.icon}</div><div><div style="font-size:14px;font-weight:600;">${cel.nome}</div><div style="font-size:10px;color:var(--ts);">${cel.recrutadores.length} recrutadores · ${cel.recrutadores.reduce((s,r)=>s+r.vagas,0)} vagas</div></div></div>
+      <div style="font-size:9px;font-weight:700;color:var(--ts);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Recrutadores</div>
+      ${cel.recrutadores.map(r=>`<div class="cel-recruiter"><div class="av" style="background:var(--blued);color:var(--blue);font-size:10px;">${r.n.split(' ').map(w=>w[0]).join('').slice(0,2)}</div><div style="flex:1;"><div style="font-size:12px;font-weight:500;">${r.n}</div><div style="font-size:10px;color:var(--ts);">${r.vagas} vagas · ${r.contrat} contrat. · SLA: ${r.sla}</div></div><span class="badge ${parseInt(r.sla)>=75?'bteal':'bamber'}" style="font-size:9px;">${r.sla}</span></div>`).join('')}
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:12px;text-align:center;">
+        <div style="background:var(--card2);border-radius:6px;padding:7px;"><div style="font-size:14px;font-weight:300;font-family:'Playfair Display',serif;">${cel.recrutadores.reduce((s,r)=>s+r.vagas,0)}</div><div style="font-size:9px;color:var(--ts);">Vagas</div></div>
+        <div style="background:var(--card2);border-radius:6px;padding:7px;"><div style="font-size:14px;font-weight:300;font-family:'Playfair Display',serif;">${cel.recrutadores.reduce((s,r)=>s+r.contrat,0)}</div><div style="font-size:9px;color:var(--ts);">Contrat.</div></div>
+        <div style="background:var(--card2);border-radius:6px;padding:7px;"><div style="font-size:14px;font-weight:300;font-family:'Playfair Display',serif;">${Math.round(cel.recrutadores.reduce((s,r)=>s+parseInt(r.sla),0)/cel.recrutadores.length)}%</div><div style="font-size:9px;color:var(--ts);">SLA médio</div></div>
+      </div>
+    </div>`).join('');
+}
+
+/* ══ AUDIT ══════════════════════════════════════════ */
+function renderAudit(){
+  const el=document.getElementById('audit-log');
+  if(!el)return;
+  el.innerHTML=AUDIT_LOG.map(a=>`<div class="audit-r"><div style="font-size:9px;color:var(--tm);width:72px;flex-shrink:0;margin-top:2px;font-family:'DM Mono',monospace;">${a.time}</div><div class="audit-ic" style="background:${a.bg};color:${a.c};">${a.icon}</div><div><div style="font-size:11px;font-weight:500;">${a.a}</div><div style="font-size:10px;color:var(--ts);">${a.d}</div></div></div>`).join('');
+}
+
+/* ══ EXEC PANEL ═════════════════════════════════════ */
+function initExecPanel(){
+  const now=new Date(),h=now.getHours();
+  const gr=h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
+  const n=ROLES[currentRole].name.split(' ')[0];
+  const el=document.getElementById('exec-hi');if(el)el.textContent=`${gr}, ${n}.`;
+  const de=document.getElementById('exec-dt');if(de)de.textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+function renderExecPanel(){
+  const el=document.getElementById('ep-appr');
+  if(!el)return;
+  [{n:'Eduardo Castro',r:'Head de Tecnologia',c:'R$45k/mês',u:'Alta'},{n:'Juliana Ferreira',r:'Head de Marketing',c:'R$32k/mês',u:'Média'}].forEach(a=>{
+    el.innerHTML+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card2);border:1px solid var(--bd);border-radius:8px;margin-bottom:6px;"><div class="av" style="width:34px;height:34px;background:var(--goldd);color:var(--gold);">${a.n.split(' ').map(w=>w[0]).join('').slice(0,2)}</div><div><div style="font-size:12px;font-weight:500;">${a.n}</div><div style="font-size:10px;color:var(--ts);">${a.r} · <strong style="color:var(--gold);">${a.c}</strong></div></div><span class="badge ${a.u==='Alta'?'bred':'bamber'}" style="margin-left:auto;">${a.u}</span><button class="btn btn-t btn-sm" onclick="showToast('Proposta aprovada!','success')">Aprovar</button></div>`;
+  });
+  const ec=document.getElementById('ep-crit');
+  if(!ec)return;
+  [{v:'VP de Vendas',a:'Comercial',d:'15/04',s:'0 finalistas'},{v:'Eng. iOS',a:'Tecnologia',d:'20/04',s:'1 em triagem'}].forEach(v=>{
+    ec.innerHTML+=`<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--redd);border:1px solid rgba(226,75,74,.2);border-radius:8px;margin-bottom:6px;"><svg width="14" height="14" fill="none" stroke="var(--red)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><div><div style="font-size:12px;font-weight:500;color:var(--red);">${v.v}</div><div style="font-size:10px;color:var(--ts);">${v.a} · Prazo: ${v.d} · ${v.s}</div></div></div>`;
+  });
+  const em=document.getElementById('ep-mgr');
+  if(!em)return;
+  [{n:'Fernanda Costa',va:12,ct:5,tf:'30d',sla:'82%'},{n:'Carlos Mendes',va:11,ct:3,tf:'36d',sla:'71%'}].forEach(m=>{
+    em.innerHTML+=`<tr><td class="tdp">${m.n}</td><td>${m.va}</td><td style="color:var(--teal);font-weight:600;">${m.ct}</td><td>${m.tf}</td><td>${m.sla}</td><td><span class="badge ${parseInt(m.sla)>=80?'bteal':'bamber'}">${parseInt(m.sla)>=80?'OK':'Atenção'}</span></td></tr>`;
+  });
+}
+function renderCVHist(){const el=document.getElementById('cv-hist');if(!el)return;if(!cvHistory.length){el.innerHTML='<div style="font-size:10px;color:var(--tm);">Nenhuma análise ainda</div>';return;}el.innerHTML=cvHistory.slice(0,5).map(h=>`<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--bd);"><div style="flex:1;font-size:11px;font-weight:500;">${h.name}</div><span style="font-size:10px;font-weight:700;color:${sc(h.s)};">${h.s}</span><span class="badge ${h.r==='Avançar'?'bteal':h.r==='Avaliar'?'bamber':'bred'}" style="font-size:9px;">${h.r}</span></div>`).join('');}
+
+/* ══ COMPARISON ═════════════════════════════════════ */
+function initComp(){
+  const opts=CANDS.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  ['cc1','cc2','cc3'].forEach((id,i)=>{document.getElementById(id).innerHTML=`<option value="">Candidato ${i+1}...</option>`+opts;});
+  document.getElementById('cc1').value='4';document.getElementById('cc2').value='1';document.getElementById('cc3').value='6';
+  buildComp();
+}
+function buildComp(){
+  const ids=['cc1','cc2','cc3'].map(id=>document.getElementById(id).value).filter(Boolean);
+  const sel=ids.map(id=>CANDS.find(c=>c.id==id)).filter(Boolean);
+  if(sel.length<2){document.getElementById('comp-result').innerHTML='<div style="text-align:center;padding:24px;color:var(--ts);font-size:12px;">Selecione ao menos 2 candidatos</div>';return;}
+  const fields=[{l:'Área',k:'area'},{l:'Exp. (anos)',k:'exp',b:'max'},{l:'Score IA',k:'score',b:'max'},{l:'Idioma',k:'lang'},{l:'Etapa',k:'stage'}];
+  let html=`<div class="tw"><table style="table-layout:fixed;"><thead><tr><th style="width:22%;">Critério</th>${sel.map(c=>`<th>${c.name.split(' ')[0]}</th>`).join('')}</tr></thead><tbody>`;
+  fields.forEach(f=>{
+    let best=-1;
+    if(f.b==='max'){const mx=Math.max(...sel.map(c=>Number(c[f.k])));best=sel.findIndex(c=>Number(c[f.k])===mx);}
+    html+=`<tr><td style="font-size:10px;color:var(--ts);font-weight:600;">${f.l}</td>`;
+    sel.forEach((c,i)=>{const v=c[f.k];html+=`<td style="${i===best?'background:var(--goldd);':''}">${f.k==='score'?`<span style="font-weight:700;color:${sc(v)};">${v}</span>`:`<span>${v}</span>`}</td>`;});
+    html+=`</tr>`;
+  });
+  html+=`</tbody></table></div>`;
+  document.getElementById('comp-result').innerHTML=html;
+  setTimeout(()=>{
+    const ctx=document.getElementById('ch-radar');if(!ctx)return;
+    const ex=Chart.getChart(ctx);if(ex)ex.destroy();
+    new Chart(ctx,{type:'radar',data:{labels:['Score','Experiência','Speaking','Técnico','Liderança','Cultura'],datasets:sel.map((c,i)=>({label:c.name.split(' ')[0],data:[c.score,Math.min(100,c.exp*5),c.ls.sp,c.score-3+i*2,c.score-8+i*4,Math.max(60,c.score-10)],borderColor:AT[i%5],backgroundColor:AC[i%5],pointRadius:3}))},options:{responsive:true,maintainAspectRatio:false,scales:{r:{grid:{color:gc()},ticks:{color:tc(),font:{size:9}},pointLabels:{color:tc(),font:{size:10}}}},plugins:{legend:{display:true,labels:{color:tc(),boxWidth:8,font:{size:10}}}}}});
+  },60);
+}
+
+/* ══ CANDIDATE MODAL ════════════════════════════════ */
+function openCand(id){
+  const c=CANDS.find(x=>x.id===id);if(!c)return;
+  const ci=c.id%5;
+  const av=document.getElementById('m-av');
+  av.textContent=c.ini;av.style.cssText=`width:40px;height:40px;font-size:14px;flex-shrink:0;border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;background:${AC[ci]};color:${AT[ci]};`;
+  document.getElementById('m-name').textContent=c.name;
+  document.getElementById('m-role').textContent=c.role+' · '+c.area;
+  document.getElementById('m-badges').innerHTML=`${sb(c.stage)}<span class="badge bblue">${c.lang}</span><span class="badge bg">${c.plat}</span>`;
+  document.getElementById('t-ov').innerHTML=`
+    <div class="g2c" style="gap:12px;"><div>
+      <div class="sec-t" style="font-size:11px;">Informações</div>
+      <div class="irow"><span class="ilbl">E-mail</span><span class="ival"><a href="mailto:${c.email}" style="font-size:11px;">${c.email}</a></span></div>
+      <div class="irow"><span class="ilbl">Telefone</span><span class="ival" style="font-size:11px;">${c.phone}</span></div>
+      <div class="irow"><span class="ilbl">Cidade</span><span class="ival" style="font-size:11px;">${c.city}</span></div>
+      <div class="irow"><span class="ilbl">Experiência</span><span class="ival" style="font-size:11px;">${c.exp} anos</span></div>
+      <div class="irow"><span class="ilbl">Formação</span><span class="ival" style="font-size:11px;">${c.edu}</span></div>
+      <div class="irow"><span class="ilbl">Plataforma</span><span class="ival"><span class="badge bg" style="font-size:9px;">${c.plat}</span></span></div>
+      <div class="irow"><span class="ilbl">Jurídico</span><span class="ival"><span class="badge ${c.legal==='Aprovado'?'bteal':'bamber'}">${c.legal}</span></span></div>
+    </div><div>
+      <div class="sec-t" style="font-size:11px;">Score IA: <span style="color:${sc(c.score)};font-family:'Playfair Display',serif;font-size:18px;">${c.score}</span></div>
+      ${sbarH('Experiência',Math.min(100,c.exp*7))}${sbarH('Formação',c.edu.includes('MBA')||c.edu.includes('ITA')?92:78)}${sbarH('Idioma',c.ls.sp)}${sbarH('Habilidades',Math.min(100,c.score+3))}${sbarH('Fit Cultural',Math.max(60,c.score-8))}
+      <div class="divider" style="margin:10px 0;"></div>
+      <div class="sec-t" style="font-size:11px;">Perfil DISC</div>
+      ${['D','I','S','C'].map(d=>{const DC={D:'#E24B4A',I:'#F59E0B',S:'#1EC5A0',C:'#3B7AF5'};const v=c.disc[d];return`<div class="disc-b"><span class="disc-lbl" style="color:${DC[d]};">${d}</span><div class="disc-tr"><div class="disc-fi" style="width:${v}%;background:${DC[d]};">${v}</div></div></div>`;}).join('')}
+    </div></div>
+    <div class="divider"></div>
+    <div class="sec-t" style="font-size:11px;">Observações</div><p style="font-size:11px;line-height:1.7;">${c.notes}</p>
+    <div class="sec-t" style="font-size:11px;margin-top:12px;">Competências</div><div>${c.skills.map(s=>`<span class="tag">${s}</span>`).join('')}</div>
+    <div style="display:flex;gap:6px;margin-top:14px;flex-wrap:wrap;">
+      <button class="btn btn-p" onclick="showToast('Candidato avançado','success');closeModal('cand-modal')">Avançar Etapa</button>
+      <button class="btn btn-t" onclick="openInviteModal();closeModal('cand-modal')">Enviar Convite</button>
+      <button class="btn btn-g" onclick="showToast('Perfil exportado','info')">Exportar</button>
+      <button class="btn btn-r" style="margin-left:auto;" onclick="showToast('Candidato reprovado','error');closeModal('cand-modal')">Reprovar</button>
+    </div>`;
+  document.getElementById('t-hi').innerHTML=`<div class="tl"><div class="tl-i"><div class="tl-d"></div><div class="tl-date">${c.date}</div><div class="tl-txt">Candidatura via <strong>${c.plat}</strong></div></div><div class="tl-i"><div class="tl-d b"></div><div class="tl-date">+2 dias</div><div class="tl-txt">Análise de CV — Score: ${c.score}/100</div></div><div class="tl-i"><div class="tl-d t"></div><div class="tl-date">+5 dias</div><div class="tl-txt">Avaliação de idiomas — ${c.lang}</div></div>${c.stage!=='Triagem'?'<div class="tl-i"><div class="tl-d b"></div><div class="tl-date">+8 dias</div><div class="tl-txt">Entrevista com RH realizada</div></div>':''}${c.stage==='Proposta'?'<div class="tl-i"><div class="tl-d" style="background:var(--gold);"></div><div class="tl-date">+20 dias</div><div class="tl-txt"><strong>Proposta enviada</strong></div></div>':''}</div>`;
+  stab(document.querySelector('.mtab'),'t-ov');
+  openModal('cand-modal');
+}
+function stab(el,t){document.querySelectorAll('.mtab').forEach(x=>x.classList.remove('active'));el.classList.add('active');document.querySelectorAll('.tc').forEach(x=>x.style.display='none');document.getElementById(t).style.display='block';}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.mov').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+function openInviteModal(){document.getElementById('inv-cand').innerHTML='<option>Selecionar...</option>'+CANDS.map(c=>`<option>${c.name}</option>`).join('');openModal('inv-modal');}
+function sendInvite(){const c=document.getElementById('inv-cand').value;showToast('Convite enviado para '+c,'success');closeModal('inv-modal');}
+
+/* ══ CV ANALYSIS ════════════════════════════════════ */
+async function analyzeCV(){
+  const text=document.getElementById('cv-text').value.trim();
+  if(text.length<50){showToast('Cole um currículo mais completo','error');return;}
+  const vaga=document.getElementById('cv-vaga').value||'a posição';
+  const ra=document.getElementById('cv-result');
+  ra.innerHTML=`<div class="card"><div style="display:flex;align-items:center;gap:8px;padding:14px;color:var(--ts);font-size:12px;"><div class="spin"></div><span>Analisando com IA...</span></div></div>`;
+  try{
+    const resp=await fetch('/api-proxy/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:`Analise este currículo para a vaga: ${vaga}. Retorne SOMENTE JSON sem markdown:\n{"nome":"...","cargo_atual":"...","resumo":"2 frases","score_geral":0-100,"pontos_fortes":["...","...","..."],"pontos_atencao":["...","..."],"idiomas":[{"idioma":"...","nivel":"...","score":0-100}],"competencias":["...","...","...","..."],"fit_cultural":0-100,"fit_tecnico":0-100,"recomendacao":"Avançar|Avaliar|Não recomendado","motivo":"1 frase"}\n\nCURRÍCULO:\n${text}`}]})});
+    const data=await resp.json();
+    const r=JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    const rc=r.recomendacao==='Avançar'?'bteal':r.recomendacao==='Avaliar'?'bamber':'bred';
+    ra.innerHTML=`<div class="ai-res">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;gap:8px;">
+        <div><div style="font-size:15px;font-weight:600;">${r.nome}</div><div style="font-size:10px;color:var(--ts);">${r.cargo_atual}</div></div>
+        <div style="text-align:right;flex-shrink:0;"><div style="font-size:24px;font-weight:300;font-family:'Playfair Display',serif;color:${sc(r.score_geral)};">${r.score_geral}</div><div style="font-size:9px;color:var(--ts);">Score Geral</div></div>
+      </div>
+      <div class="ai-s-t">Resumo</div><div style="font-size:11px;line-height:1.7;margin-bottom:12px;">${r.resumo}</div>
+      ${sbarH('Fit Técnico',r.fit_tecnico)}${sbarH('Fit Cultural',r.fit_cultural)}
+      <div class="g2c" style="gap:10px;margin-top:10px;">
+        <div><div class="ai-s-t">Pontos Fortes</div>${r.pontos_fortes.map(p=>`<div style="font-size:10px;margin-bottom:2px;"><span style="color:var(--teal);">✓</span> ${p}</div>`).join('')}</div>
+        <div><div class="ai-s-t">Pontos de Atenção</div>${r.pontos_atencao.map(p=>`<div style="font-size:10px;margin-bottom:2px;"><span style="color:var(--amber);">!</span> ${p}</div>`).join('')}</div>
+      </div>
+      <div class="ai-s-t" style="margin-top:10px;">Idiomas</div>${r.idiomas.map(l=>`<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;"><span style="font-size:11px;width:90px;">${l.idioma}</span><div style="flex:1;height:3px;background:var(--bd);border-radius:2px;overflow:hidden;"><div style="width:${l.score}%;height:100%;background:var(--blue);border-radius:2px;"></div></div><span style="font-size:10px;color:var(--ts);">${l.nivel}</span></div>`).join('')}
+      <div class="ai-s-t" style="margin-top:10px;">Competências</div><div style="margin-bottom:10px;">${r.competencias.map(c=>`<span class="tag">${c}</span>`).join('')}</div>
+      <div style="background:var(--card);border:1px solid var(--bd);border-radius:6px;padding:10px;display:flex;align-items:center;gap:8px;">
+        <span class="badge ${rc}" style="font-size:11px;padding:3px 8px;">${r.recomendacao}</span>
+        <span style="font-size:11px;color:var(--ts);">${r.motivo}</span>
+      </div>
+      <div style="display:flex;gap:5px;margin-top:10px;">
+        <button class="btn btn-p btn-sm" onclick="showToast('Candidato salvo','success')">Salvar</button>
+        <button class="btn btn-g btn-sm" onclick="showToast('Exportado','info')">Exportar</button>
+      </div>
+    </div>`;
+    cvHistory.unshift({name:r.nome,s:r.score_geral,r:r.recomendacao});
+    renderCVHist();showToast('Análise concluída — '+r.nome,'success');
+  }catch(e){ra.innerHTML=`<div class="card"><div style="padding:12px;color:var(--red);font-size:11px;">Erro: ${e.message}</div></div>`;showToast('Erro na análise','error');}
+}
+
+/* ══ CHARTS ═════════════════════════════════════════ */
+function tc(){return isDark?'#8899BB':'#5B6A8A';}
+function gc(){return isDark?'rgba(255,255,255,.05)':'rgba(0,0,0,.05)';}
+function destroyCharts(){Object.values(allCharts).forEach(c=>{try{c.destroy();}catch(e){}});allCharts={};}
+function mk(id,cfg){const el=document.getElementById(id);if(!el)return;const ex=Chart.getChart(el);if(ex)ex.destroy();const c=new Chart(el,cfg);allCharts[id]=c;return c;}
+
+function initCharts(v){
+  const tk={color:tc(),font:{size:10}},gr={color:gc()};
+  if(v==='dashboard'){
+    mk('ch-pipeline',{type:'bar',data:{labels:['Triagem','Entrev. RH','Técnica','Final','Proposta','Reprov.'],datasets:[{data:[1,2,2,2,2,1],backgroundColor:['#3B7AF530','#8B5CF630','#F59E0B30','#1EC5A030','#C9973A30','#E24B4A30'],borderColor:['#3B7AF5','#8B5CF6','#F59E0B','#1EC5A0','#C9973A','#E24B4A'],borderWidth:1.5,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{...tk,maxRotation:30},grid:gr},y:{ticks:{...tk,stepSize:1},grid:gr}},plugins:{legend:{display:false}}}});
+    mk('ch-status',{type:'doughnut',data:{labels:['Em processo','Finalistas','Contratados','Reprovados'],datasets:[{data:[31,8,6,1],backgroundColor:['#3B7AF5','#1EC5A0','#C9973A','#E24B4A'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'72%',plugins:{legend:{display:true,labels:{color:tc(),boxWidth:7,font:{size:10}}}}}});
+    mk('ch-monthly',{type:'line',data:{labels:['Nov','Dez','Jan','Fev','Mar','Abr'],datasets:[{data:[5,3,7,9,6,8],borderColor:'#C9973A',backgroundColor:'rgba(201,151,58,.08)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#C9973A'}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:tk,grid:gr},y:{ticks:{...tk,stepSize:2},grid:gr}},plugins:{legend:{display:false}}}});
+    mk('ch-sources',{type:'bar',data:{labels:['LinkedIn','Indicação','Headhunter','Pandapé','Gupy'],datasets:[{data:[50,38,18,32,64],backgroundColor:'#3B7AF520',borderColor:'#3B7AF5',borderWidth:1.5,borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,scales:{x:{ticks:tk,grid:gr},y:{ticks:tk,grid:{display:false}}},plugins:{legend:{display:false}}}});
+  }
+  if(v==='idiomas')mk('ch-lang',{type:'bar',data:{labels:['C2','C1','B2','B1','A2'],datasets:[{label:'Inglês',data:[2,3,2,1,1],backgroundColor:'#3B7AF520',borderColor:'#3B7AF5',borderWidth:1.5,borderRadius:3},{label:'Espanhol',data:[0,1,2,1,0],backgroundColor:'#8B5CF620',borderColor:'#8B5CF6',borderWidth:1.5,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:tk,grid:gr},y:{ticks:{...tk,stepSize:1},grid:gr}},plugins:{legend:{display:true,labels:{color:tc(),boxWidth:7,font:{size:10}}}}}});
+  if(v==='plataformas')mk('ch-plat',{type:'bar',data:{labels:PLAT_D.map(p=>p.name),datasets:[{label:'Candidatos',data:PLAT_D.map(p=>p.cands),backgroundColor:PLAT_D.map(p=>p.color+'30'),borderColor:PLAT_D.map(p=>p.color),borderWidth:1.5,borderRadius:6},{label:'Contratados',data:PLAT_D.map(p=>p.hired),backgroundColor:PLAT_D.map(p=>'#1EC5A030'),borderColor:PLAT_D.map(p=>'#1EC5A0'),borderWidth:1.5,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:tk,grid:gr},y:{ticks:tk,grid:gr}},plugins:{legend:{display:true,labels:{color:tc(),boxWidth:7,font:{size:10}}}}}});
+  if(v==='performance'){
+    mk('ch-funnel',{type:'bar',data:{labels:['Candidaturas','Triagem','Entrev. RH','Técnica','Final','Proposta','Contrat.'],datasets:[{data:[247,120,62,28,14,8,8],backgroundColor:'#3B7AF520',borderColor:'#3B7AF5',borderWidth:1.5,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:{...tk,maxRotation:30},grid:gr},y:{ticks:tk,grid:gr}},plugins:{legend:{display:false}}}});
+    mk('ch-time',{type:'bar',data:{labels:['Triagem','Entrev. RH','Técnica','Final','Proposta'],datasets:[{label:'Real',data:[3,5,7,4,6],backgroundColor:'#8B5CF620',borderColor:'#8B5CF6',borderWidth:1.5,borderRadius:3},{label:'Meta',data:[2,4,5,3,4],backgroundColor:'#1EC5A020',borderColor:'#1EC5A0',borderWidth:1.5,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:tk,grid:gr},y:{ticks:tk,grid:gr}},plugins:{legend:{display:true,labels:{color:tc(),boxWidth:7,font:{size:10}}}}}});
+    mk('ch-rec',{type:'bar',data:{labels:['Carlos M.','Fernanda C.','Roberto F.','Pedro S.'],datasets:[{data:[5,4,3,2],backgroundColor:'#C9973A20',borderColor:'#C9973A',borderWidth:1.5,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{ticks:tk,grid:gr},y:{ticks:{...tk,stepSize:1},grid:gr}},plugins:{legend:{display:false}}}});
+    mk('ch-sla',{type:'doughnut',data:{labels:['Dentro','Fora'],datasets:[{data:[74,26],backgroundColor:['#1EC5A0','#E24B4A'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{display:true,labels:{color:tc(),boxWidth:7,font:{size:10}}}}}});
+  }
+  if(v==='relatorios'){
+    mk('ch-dept',{type:'bar',data:{labels:['Tecnologia','Comercial','Financeiro','Marketing','Operações','RH'],datasets:[{data:[12,8,3,5,4,2],backgroundColor:'#C9973A20',borderColor:'#C9973A',borderWidth:1.5,borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,scales:{x:{ticks:tk,grid:gr},y:{ticks:tk,grid:{display:false}}},plugins:{legend:{display:false}}}});
+    mk('ch-div',{type:'doughnut',data:{labels:['Mulheres','Homens','Não-binário'],datasets:[{data:[52,46,2],backgroundColor:['#8B5CF6','#3B7AF5','#1EC5A0'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:true,labels:{color:tc(),boxWidth:7,font:{size:10}}}}}});
+    mk('ch-hc',{type:'line',data:{labels:['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],datasets:[{label:'Realizado',data:[4,6,5,8,null,null,null,null,null,null,null,null],borderColor:'#C9973A',tension:.4,fill:false,pointRadius:4,pointBackgroundColor:'#C9973A',datalabels:{display:true,color:'#C9973A',font:{size:10,weight:'700'},align:'top',offset:4,formatter:v=>v!=null?v:null}},{label:'Meta',data:[5,5,5,10,10,10,8,8,8,12,12,10],borderColor:'#3B7AF5',borderDash:[5,5],tension:.4,pointRadius:3,pointBackgroundColor:'#3B7AF5',datalabels:{display:true,color:'#3B7AF5',font:{size:9,weight:'600'},align:'bottom',offset:4,formatter:v=>v!=null?v:null}}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:16,bottom:16}},scales:{x:{ticks:tk,grid:gr},y:{ticks:{...tk,stepSize:2},grid:gr}},plugins:{legend:{display:true,labels:{color:tc(),boxWidth:7,font:{size:10}}},datalabels:{display:true}}}});
+    const slaData=[['Triagem → Entrev. RH','3d','2d','OK'],['Entrev. → Técnica','5d','7d','Em risco'],['Técnica → Final','4d','5d','OK'],['Final → Proposta','6d','3d','Em risco']];
+    document.getElementById('sla-wrap').innerHTML=`<table><thead><tr><th>Etapa</th><th>Meta</th><th>Realizado</th><th>Status</th></tr></thead><tbody>${slaData.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td><span class="badge ${r[3]==='OK'?'bteal':'bamber'}">${r[3]}</span></td></tr>`).join('')}</tbody></table>`;
+  }
+  if(v==='exec-panel'){
+    mk('ch-ep1',{type:'line',data:{labels:['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],datasets:[{label:'Realizado',data:[4,6,5,8,null,null,null,null,null,null,null,null],borderColor:'#C9973A',backgroundColor:'rgba(201,151,58,.07)',tension:.4,fill:true,pointRadius:4,pointBackgroundColor:'#C9973A',datalabels:{display:true,color:'#C9973A',font:{size:11,weight:'700'},align:'top',offset:5,formatter:v=>v!=null?v:null}},{label:'Meta',data:[5,5,5,10,10,10,8,8,8,12,12,10],borderColor:'#3B7AF5',borderDash:[5,5],tension:.4,pointRadius:3,pointBackgroundColor:'#3B7AF5',datalabels:{display:true,color:'#3B7AF5',font:{size:10,weight:'600'},align:'bottom',offset:5,formatter:v=>v!=null?v:null}}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:18,bottom:18}},scales:{x:{ticks:tk,grid:gr},y:{ticks:{...tk,stepSize:2},grid:gr}},plugins:{legend:{display:true,labels:{color:tc(),boxWidth:7,font:{size:10}}},datalabels:{display:true}}}});
+    mk('ch-ep2',{type:'bar',data:{labels:['Estágio','Júnior','Pleno','Sênior','Gestão','C-Level'],datasets:[{data:[4,8,15,25,35,80],backgroundColor:'#1EC5A020',borderColor:'#1EC5A0',borderWidth:1.5,borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,scales:{x:{ticks:tk,grid:gr},y:{ticks:tk,grid:{display:false}}},plugins:{legend:{display:false}}}});
+  }
+}
+
+
+/* ══════════════════════════════════════════════════════
+   TAB SWITCHERS
+══════════════════════════════════════════════════════ */
+function switchLexTab(el,target){
+  document.querySelectorAll('#view-juridico .mtab').forEach(t=>{t.classList.remove('active');t.style.color='var(--ts)';t.style.borderBottomColor='transparent';});
+  el.classList.add('active');el.style.color='var(--gold)';el.style.borderBottomColor='var(--gold)';
+  ['lex-form-tab','lex-hist-tab'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+  const t=document.getElementById(target);if(t)t.style.display='block';
+}
+function switchCVTab(el,target){
+  document.querySelectorAll('#view-cv-analysis .mtab').forEach(t=>{t.classList.remove('active');t.style.color='var(--ts)';t.style.borderBottomColor='transparent';});
+  el.classList.add('active');el.style.color='var(--gold)';el.style.borderBottomColor='var(--gold)';
+  ['cva-ind','cva-batch'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+  const t=document.getElementById(target);if(t)t.style.display='block';
+  if(target==='cva-batch'&&document.getElementById('batch-cv-list').children.length===0)addCVEntry();
+}
+
+/* ══════════════════════════════════════════════════════
+   LEXANALYZER — ANÁLISE JURÍDICA
+══════════════════════════════════════════════════════ */
+const LEX_SYSTEM=`Você é o LexAnalyzer, um sistema especialista em análise de risco jurídico, reputacional e trabalhista para a Stefanini.
+Todas as regras abaixo têm caráter OBRIGATÓRIO e NÃO podem ser ignoradas.
+A decisão final deve seguir estritamente a hierarquia descrita neste prompt.
+
+PRINCÍPIO CENTRAL – REGRA Nº 1 (PRIORIDADE ABSOLUTA):
+QUALQUER processo trabalhista cujo assunto NÃO esteja claramente relacionado a verbas rescisórias DEVE gerar REPROVAÇÃO AUTOMÁTICA, independentemente de: ser autor ou réu, estar arquivado ou ativo, quantidade de processos, presença ou ausência de conflito explícito.
+
+EXCEÇÃO ÚNICA (ÚNICO CASO ONDE APROVAR É PERMITIDO):
+Aprovação só é possível se, e somente se, TODAS as condições abaixo forem atendidas simultaneamente:
+1. O candidato é AUTOR (reclamante).
+2. O processo é TRABALHISTA.
+3. O processo trata EXCLUSIVAMENTE de verbas rescisórias (ex.: FGTS, férias, salário, horas extras, verbas rescisórias simples).
+4. O assunto NÃO menciona: assédio, agressão, dano moral, indenização, conduta, comportamento inadequado ou qualquer conflito relevante.
+5. O processo NÃO está ativo.
+6. Não há divergências entre plataformas.
+7. Não há NENHUM outro processo de qualquer tipo.
+Se qualquer um desses itens NÃO for atendido → REPROVAÇÃO AUTOMÁTICA.
+
+REPROVAÇÃO AUTOMÁTICA (independente de contexto):
+- Processo trabalhista em que o candidato aparece como réu/reclamado/polo passivo.
+- PROCESSOS CRIMINAIS (ativos ou arquivados).
+- Qualquer processo ativo (de qualquer natureza).
+- Múltiplas ações trabalhistas (5 ou mais).
+- Divergência entre plataformas.
+- Processo trabalhista com assunto diferente de verbas rescisórias.
+- Processo trabalhista mencionando: assédio, agressão, dano moral, indenização, conflito, desentendimento, conduta, comportamento inadequado.
+- Justificativas NATCORP contendo: "baixa performance", "baixo desempenho", "não indicado", "problemas de conduta".
+
+REGRAS NATCORP:
+Se aparecer menção à análise de tempo de retorno, inserir OBRIGATORIAMENTE: "Observação: Me desculpe, mas eu não consigo trazer uma análise correta se o colaborador pode voltar para a empresa através do tempo da sua última passagem pela Stefanini. Obrigado pela compreensão."
+
+ANÁLISE HUMANA NECESSÁRIA:
+- Processos cíveis (qualquer tipo).
+- Falta de informações essenciais (assunto não informado).
+- Dados inconsistentes ou ausentes em alguma plataforma.
+
+DECISÃO FINAL (HIERARQUIA):
+1º — Se qualquer regra de REPROVAÇÃO for acionada → 🔴 REPROVADO
+2º — Se TODAS as condições da EXCEÇÃO ÚNICA forem atendidas → 🟢 APROVADO
+3º — Se faltar dados essenciais → ⚠️ ANÁLISE HUMANA NECESSÁRIA
+
+FORMATO OBRIGATÓRIO DE SAÍDA (use exatamente este formato):
+ANÁLISE JURÍDICA COMPLETA
+Nome: [informar]
+CPF: [informar]
+Vaga: [informar]
+
+Resumo por ferramenta:
+Natcorp: [resumo]
+Escavador: [resumo]
+Outras Plataformas: [resumo ou "Não informado"]
+
+Processos Encontrados: [quantidade e papéis]
+
+Resumo dos Processos:
+[Para cada processo:]
+Processo nº [número ou "não informado"]
+Natureza: [tipo]
+Papel: [autor/réu/outro]
+Assunto: [informar ou "não informado"]
+Tribunal: [informar]
+Status: [informar]
+[Se informações incompletas: incluir link https://sistemascorporativos.stefanini.com/#/principal]
+
+Parecer Final: [🟢 APROVADO | 🔴 REPROVADO | ⚠️ ANÁLISE HUMANA NECESSÁRIA]
+
+Motivos:
+[Explicar de forma objetiva com base nas regras acionadas]
+
+Observações finais:
+- Para Natcorp: O parecer automatizado é preliminar. Validação final depende do setor jurídico.
+- Para demais ferramentas: A decisão final depende da validação jurídica.`;
+
+async function runLexAnalyzer(){
+  const nome=document.getElementById('lex-nome').value.trim();
+  const cpf=document.getElementById('lex-cpf').value.trim();
+  const vaga=document.getElementById('lex-vaga').value.trim();
+  const natcorp=document.getElementById('lex-natcorp').value.trim();
+  const escavador=document.getElementById('lex-escavador').value.trim();
+  const outras=document.getElementById('lex-outras').value.trim();
+  if(!nome||!cpf){showToast('Preencha nome e CPF do candidato','error');return;}
+  if(!natcorp&&!escavador&&!outras){showToast('Informe dados de ao menos uma plataforma','error');return;}
+  const ra=document.getElementById('lex-result');
+  ra.innerHTML=`<div class="card"><div style="display:flex;align-items:center;gap:10px;padding:16px;color:var(--ts);font-size:12px;"><div class="spin"></div><span>LexAnalyzer processando análise jurídica...</span></div></div>`;
+  try{
+    const userMsg=`Nome: ${nome}\nCPF: ${cpf}\nVaga: ${vaga||'Não informada'}\nNatcorp: "${natcorp||'Não informado'}"\nEscavador: "${escavador||'Não informado'}"\nOutras Plataformas: "${outras||'Não informado'}"`;
+    const resp=await fetch('/api-proxy/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,system:LEX_SYSTEM,messages:[{role:'user',content:userMsg}]})});
+    const data=await resp.json();
+    const text=data.content[0].text;
+    const isAprov=text.includes('🟢 APROVADO');
+    const isReprov=text.includes('🔴 REPROVADO');
+    const isHuman=text.includes('⚠️ ANÁLISE HUMANA');
+    const boxClass=isAprov?'lex-approved':isReprov?'lex-reproved':'lex-human';
+    const headerColor=isAprov?'var(--teal)':isReprov?'var(--red)':'var(--amber)';
+    const headerLabel=isAprov?'🟢 APROVADO':isReprov?'🔴 REPROVADO':'⚠️ ANÁLISE HUMANA NECESSÁRIA';
+    // Format text with proper line breaks
+    const formatted=text.replace(/\n/g,'<br>').replace(/(🟢 APROVADO|🔴 REPROVADO|⚠️ ANÁLISE HUMANA NECESSÁRIA)/g,`<strong style="color:${headerColor};font-size:14px;">$1</strong>`).replace(/(Motivos:|Observações finais:|Processos Encontrados:|Resumo dos Processos:|Resumo por ferramenta:|ANÁLISE JURÍDICA COMPLETA)/g,'<strong style="color:var(--tx);">$1</strong>');
+    ra.innerHTML=`<div class="${boxClass}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid ${headerColor}40;">
+        <div style="font-size:15px;font-weight:700;color:${headerColor};">${headerLabel}</div>
+        <div style="margin-left:auto;font-size:10px;color:var(--ts);">${nome} · ${new Date().toLocaleString('pt-BR')}</div>
+      </div>
+      <div style="font-size:12px;line-height:1.8;">${formatted}</div>
+      <div style="display:flex;gap:6px;margin-top:14px;flex-wrap:wrap;">
+        <button class="btn btn-g btn-sm" onclick="copyLexResult()">Copiar Resultado</button>
+        <button class="btn btn-g btn-sm" onclick="showToast('Análise salva no histórico','success');switchLexTab(document.getElementById('lxt2'),'lex-hist-tab')">Ver Histórico</button>
+      </div>
+    </div>`;
+    showToast('Análise LexAnalyzer concluída — '+nome,'success');
+  }catch(e){
+    ra.innerHTML=`<div class="card"><div style="padding:14px;color:var(--red);font-size:12px;">Erro: ${e.message}</div></div>`;
+    showToast('Erro na análise jurídica','error');
+  }
+}
+function copyLexResult(){
+  const pre=document.getElementById('lex-result').innerText;
+  navigator.clipboard.writeText(pre).then(()=>showToast('Resultado copiado!','success'));
+}
+
+/* ══════════════════════════════════════════════════════
+   WHATSAPP GENERATOR
+══════════════════════════════════════════════════════ */
+function generateWA(type){
+  const rec=document.getElementById('wa-rec').value.trim();
+  const vaga=document.getElementById('wa-vaga').value.trim();
+  const cand=document.getElementById('wa-cand').value.trim();
+  const phone=document.getElementById('wa-phone').value.trim().replace(/\D/g,'');
+  if(!rec||!vaga||!cand||!phone){showToast('Preencha todos os campos (nome, vaga, candidato e WhatsApp)','error');return;}
+  let msg='',label='';
+  if(type==='direto'){
+    label='Convite Direto';
+    msg=`Olá ${cand}, tudo bem?\n\nSou ${rec}, do time de Recrutamento & Seleção da Stefanini.\nRecebemos seu currículo para a oportunidade de *${vaga}* e gostaríamos de te convidar para participar de nossa Entrevista Técnica.\n\nEntraremos em contato por este número para agendar a entrevista técnica.\nSe tiver qualquer dúvida ou precisar de apoio, estou à disposição.\nConte conosco!\n\nAtenciosamente,\nEquipe de Gente e Cultura`;
+  } else {
+    label='Pré-Perguntas';
+    msg=`Olá ${cand}, tudo bem?\n\nSou ${rec}, do time de People & Performance da Stefanini.\nRecebemos seu currículo para a oportunidade de *${vaga}* e gostaríamos de te convidar para participar da nossa Entrevista Técnica.\n\nAntes de seguirmos para a entrevista técnica, gostaria de confirmar algumas informações importantes:\n\n1 - Você tem disponibilidade para atuação híbrida ou presencial?\n2 - Qual é a sua pretensão salarial?\n3 - Você tem preferência por vaga CLT ou PJ?\n4 - Você tem disponibilidade de fazer a entrevista via Teams?\n\nEssas informações são essenciais para seguirmos com o processo.\nFico no aguardo das suas respostas!\n\nUm abraço e que seu dia seja leve e produtivo!\nAtenciosamente,\nEquipe de Gente e Cultura`;
+  }
+  document.getElementById('wa-msg-pre').textContent=msg;
+  document.getElementById('wa-type-label').textContent=label+' — Mensagem gerada';
+  const waPhone='55'+phone;
+  const waUrl='https://wa.me/'+waPhone+'?text='+encodeURIComponent(msg);
+  document.getElementById('wa-link').href=waUrl;
+  document.getElementById('wa-result').style.display='block';
+  showToast('Mensagem gerada com sucesso!','success');
+}
+function copyWA(){
+  const msg=document.getElementById('wa-msg-pre').textContent;
+  navigator.clipboard.writeText(msg).then(()=>showToast('Mensagem copiada!','success'));
+}
+
+/* ══════════════════════════════════════════════════════
+   BATCH CV RANKING
+══════════════════════════════════════════════════════ */
+let cvEntries=[];
+let cvEntryIdx=0;
+function addCVEntry(){
+  if(cvEntries.length>=10){showToast('Máximo de 10 currículos atingido','error');return;}
+  const idx=cvEntryIdx++;
+  cvEntries.push(idx);
+  const el=document.getElementById('batch-cv-list');
+  const div=document.createElement('div');
+  div.className='cv-entry';div.id='cve-'+idx;
+  div.innerHTML=`<div class="cv-entry-header"><div class="cv-entry-num">${cvEntries.length}</div><input type="text" id="cve-name-${idx}" placeholder="Nome do candidato ${cvEntries.length}..." style="flex:1;background:var(--sf);border:1px solid var(--bd2);border-radius:5px;padding:5px 8px;color:var(--tx);outline:none;font-size:11px;"><button class="btn btn-r btn-sm btn-ic" onclick="removeCVEntry(${idx})" title="Remover"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><textarea id="cve-text-${idx}" style="width:100%;height:100px;background:var(--card);border:1px solid var(--bd);border-radius:5px;padding:7px 9px;color:var(--tx);resize:vertical;outline:none;font-size:11px;line-height:1.5;transition:background .25s;margin-top:6px;" placeholder="Cole o texto do currículo ${cvEntries.length} aqui..."></textarea>`;
+  el.appendChild(div);
+  if(cvEntries.length>=10)document.getElementById('btn-add-cv').disabled=true;
+}
+function removeCVEntry(idx){
+  const el=document.getElementById('cve-'+idx);if(el)el.remove();
+  cvEntries=cvEntries.filter(i=>i!==idx);
+  document.getElementById('btn-add-cv').disabled=false;
+}
+async function rankCVs(){
+  const jobDesc=document.getElementById('batch-job-desc').value.trim();
+  if(!jobDesc){showToast('Cole a descrição da vaga antes de rankear','error');return;}
+  const cvs=[];
+  for(const idx of cvEntries){
+    const nameEl=document.getElementById('cve-name-'+idx);
+    const textEl=document.getElementById('cve-text-'+idx);
+    if(nameEl&&textEl&&textEl.value.trim()){
+      cvs.push({name:nameEl.value.trim()||'Candidato '+(cvs.length+1),text:textEl.value.trim()});
+    }
+  }
+  if(cvs.length<2){showToast('Adicione ao menos 2 currículos para gerar o ranking','error');return;}
+  const ra=document.getElementById('batch-result');
+  ra.innerHTML=`<div class="card"><div style="display:flex;align-items:center;gap:10px;padding:16px;color:var(--ts);font-size:12px;"><div class="spin"></div><span>Analisando ${cvs.length} currículos e gerando ranking...</span></div></div>`;
+  const cvsText=cvs.map((c,i)=>`=== CANDIDATO ${i+1}: ${c.name} ===\n${c.text}`).join('\n\n');
+  const prompt=`Você é especialista em R&S. Analise os ${cvs.length} currículos abaixo para a vaga descrita e gere um ranking detalhado.
+
+DESCRIÇÃO DA VAGA:
+${jobDesc}
+
+CURRÍCULOS:
+${cvsText}
+
+Responda APENAS em JSON sem markdown:
+{
+  "vaga_resumida": "título da vaga em poucas palavras",
+  "total_candidatos": ${cvs.length},
+  "ranking": [
+    {
+      "posicao": 1,
+      "nome": "nome do candidato",
+      "score": 0-100,
+      "fit_tecnico": 0-100,
+      "fit_cultural": 0-100,
+      "experiencia": "X anos",
+      "pontos_fortes": ["ponto1","ponto2","ponto3"],
+      "pontos_atencao": ["atencao1"],
+      "justificativa": "2-3 frases explicando a posição no ranking",
+      "recomendacao": "Avançar|Avaliar|Não recomendado"
+    }
+  ]
+}
+IMPORTANTE: ordene do mais apto ao menos apto. Todos os ${cvs.length} candidatos devem aparecer no ranking.`;
+  try{
+    const resp=await fetch('/api-proxy/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,messages:[{role:'user',content:prompt}]})});
+    const data=await resp.json();
+    const r=JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    const medals=['🥇','🥈','🥉'];
+    const posClass=(p)=>p===1?'gold':p===2?'silver':p===3?'bronze':'';
+    const rcBadge=rec=>rec==='Avançar'?'bteal':rec==='Avaliar'?'bamber':'bred';
+    ra.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+      <div style="font-size:13px;font-weight:600;">Ranking — ${r.vaga_resumida}</div>
+      <div style="display:flex;gap:5px;align-items:center;"><span class="badge bblue" style="font-size:10px;">${r.total_candidatos} candidatos analisados</span><button class="btn btn-g btn-sm" onclick="exportRanking()">Exportar</button></div>
+    </div>
+    ${r.ranking.map((c,i)=>`<div class="rank-card">
+      <div class="rank-pos ${posClass(c.posicao)}">${medals[i]||'#'+c.posicao}</div>
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;padding-right:36px;">
+        <div class="av" style="width:32px;height:32px;font-size:11px;font-weight:700;background:${AC[(i)%5]};color:${AT[(i)%5]};flex-shrink:0;">${c.nome.split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
+        <div><div style="font-size:13px;font-weight:600;">${c.nome}</div>
+        <div style="font-size:10px;color:var(--ts);">${c.experiencia} · Fit técnico: <strong style="color:${sc(c.fit_tecnico)};">${c.fit_tecnico}</strong> · Fit cultural: <strong style="color:${sc(c.fit_cultural)};">${c.fit_cultural}</strong></div></div>
+        <div style="margin-left:auto;text-align:right;flex-shrink:0;"><div style="font-size:22px;font-weight:300;font-family:'Playfair Display',serif;color:${sc(c.score)};">${c.score}</div><div style="font-size:9px;color:var(--ts);">Score Geral</div></div>
+      </div>
+      <div style="font-size:11px;color:var(--ts);line-height:1.7;margin-bottom:8px;">${c.justificativa}</div>
+      <div style="display:flex;gap:10px;font-size:10px;flex-wrap:wrap;margin-bottom:8px;">
+        <div><span style="color:var(--teal);font-weight:600;">✓ Fortes: </span>${c.pontos_fortes.join(' · ')}</div>
+        ${c.pontos_atencao.length?`<div><span style="color:var(--amber);font-weight:600;">! Atenção: </span>${c.pontos_atencao.join(' · ')}</div>`:''}
+      </div>
+      <span class="badge ${rcBadge(c.recomendacao)}">${c.recomendacao}</span>
+    </div>`).join('')}`;
+    showToast(`Ranking gerado — ${r.total_candidatos} candidatos analisados`,'success');
+  }catch(e){
+    ra.innerHTML=`<div class="card"><div style="padding:14px;color:var(--red);font-size:12px;">Erro: ${e.message}</div></div>`;
+    showToast('Erro ao gerar ranking','error');
+  }
+}
+function exportRanking(){showToast('Ranking exportado em PDF','success');}
+
+/* ══════════════════════════════════════════════════════
+   TRANSCRIPT ANALYSIS — IDIOMAS
+══════════════════════════════════════════════════════ */
+function handleRecFile(input){
+  const file=input.files[0];if(!file)return;
+  document.getElementById('rec-drop-txt').textContent='Gravação anexada: '+file.name;
+  document.getElementById('rec-drop-zone').style.borderColor='var(--teal)';
+  const info=document.getElementById('rec-file-info');
+  info.style.display='block';
+  const mb=(file.size/1024/1024).toFixed(1);
+  info.innerHTML=`<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><line x1="12" y1="19" x2="12" y2="23"/></svg> <strong>${file.name}</strong> — ${mb}MB · Gravação recebida. Adicione a transcrição ao lado para análise de IA.`;
+}
+function handleRecDrop(e){
+  e.preventDefault();document.getElementById('rec-drop-zone').style.borderColor='var(--bd2)';
+  const file=e.dataTransfer.files[0];if(file){const dt=new DataTransfer();dt.items.add(file);document.getElementById('rec-file-inp').files=dt.files;handleRecFile(document.getElementById('rec-file-inp'));}
+}
+async function analyzeTranscript(){
+  const transcript=document.getElementById('lang-transcript').value.trim();
+  if(transcript.length<50){showToast('Cole uma transcrição mais completa para análise','error');return;}
+  const cand=document.getElementById('lang-cand-sel').value||'Candidato';
+  const idioma=document.getElementById('lang-idioma-sel').value||'Inglês';
+  const ra=document.getElementById('lang-analysis-result');
+  ra.innerHTML=`<div class="card"><div style="display:flex;align-items:center;gap:8px;padding:12px;color:var(--ts);font-size:12px;"><div class="spin"></div><span>Analisando proficiência em ${idioma}...</span></div></div>`;
+  try{
+    const prompt=`Você é um avaliador especialista em proficiência de idiomas para recrutamento corporativo. Analise a transcrição de entrevista em ${idioma} abaixo e avalie o candidato.
+
+Candidato: ${cand}
+Idioma: ${idioma}
+
+TRANSCRIÇÃO:
+${transcript}
+
+Responda APENAS em JSON sem markdown:
+{
+  "candidato": "${cand}",
+  "idioma": "${idioma}",
+  "nivel_cefr": "A1|A2|B1|B2|C1|C2",
+  "nivel_descritivo": "Básico|Intermediário|Avançado|Fluente|Proficiente",
+  "scores": {"speaking": 0-100, "vocabulario": 0-100, "gramatica": 0-100, "fluencia": 0-100, "coerencia": 0-100},
+  "score_geral": 0-100,
+  "pontos_fortes": ["...","..."],
+  "pontos_melhoria": ["...","..."],
+  "exemplos_positivos": ["trecho da transcrição que demonstra competência"],
+  "exemplos_melhoria": ["trecho que indica área de melhoria"],
+  "parecer": "Recomendado|Recomendado com ressalvas|Não recomendado",
+  "justificativa": "2-3 frases objetivas sobre a avaliação"
+}`;
+    const resp=await fetch('/api-proxy/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const data=await resp.json();
+    const r=JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
+    const rcColor=r.parecer==='Recomendado'?'var(--teal)':r.parecer.includes('ressalvas')?'var(--amber)':'var(--red)';
+    const rcBadge=r.parecer==='Recomendado'?'bteal':r.parecer.includes('ressalvas')?'bamber':'bred';
+    const barItem=(l,v)=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="font-size:10px;color:var(--ts);width:90px;">${l}</span><div style="flex:1;height:4px;background:var(--bd);border-radius:2px;overflow:hidden;"><div style="width:${v}%;height:100%;background:${sc(v)};border-radius:2px;"></div></div><span style="font-size:10px;font-weight:600;color:${sc(v)};width:24px;text-align:right;">${v}</span></div>`;
+    ra.innerHTML=`<div class="ai-res">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap;">
+        <div><div style="font-size:14px;font-weight:600;">${r.candidato}</div><div style="font-size:11px;color:var(--ts);">${r.idioma} · ${r.nivel_cefr} — ${r.nivel_descritivo}</div></div>
+        <div style="text-align:right;"><div style="font-size:24px;font-weight:300;font-family:'Playfair Display',serif;color:${sc(r.score_geral)};">${r.score_geral}</div><div style="font-size:9px;color:var(--ts);">Score Geral</div></div>
+      </div>
+      ${barItem('Speaking',r.scores.speaking)}${barItem('Vocabulário',r.scores.vocabulario)}${barItem('Gramática',r.scores.gramatica)}${barItem('Fluência',r.scores.fluencia)}${barItem('Coerência',r.scores.coerencia)}
+      <div class="g2c" style="gap:10px;margin-top:10px;">
+        <div><div class="ai-s-t">Pontos Fortes</div>${r.pontos_fortes.map(p=>`<div style="font-size:10px;margin-bottom:2px;"><span style="color:var(--teal);">✓</span> ${p}</div>`).join('')}</div>
+        <div><div class="ai-s-t">Pontos de Melhoria</div>${r.pontos_melhoria.map(p=>`<div style="font-size:10px;margin-bottom:2px;"><span style="color:var(--amber);">!</span> ${p}</div>`).join('')}</div>
+      </div>
+      ${r.exemplos_positivos&&r.exemplos_positivos[0]?`<div style="margin-top:10px;padding:8px 10px;background:var(--teald);border-radius:6px;font-size:10px;color:var(--ts);">💬 <em>"${r.exemplos_positivos[0]}"</em></div>`:''}
+      <div style="margin-top:10px;background:var(--card);border:1px solid var(--bd);border-radius:6px;padding:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span class="badge ${rcBadge}" style="font-size:11px;">${r.parecer}</span>
+        <span style="font-size:11px;color:var(--ts);">${r.justificativa}</span>
+      </div>
+      <button class="btn btn-g btn-sm" style="margin-top:8px;" onclick="showToast('Avaliação salva no perfil do candidato','success')">Salvar Avaliação</button>
+    </div>`;
+    showToast('Análise de proficiência concluída','success');
+  }catch(e){
+    ra.innerHTML=`<div class="card"><div style="padding:12px;color:var(--red);font-size:12px;">Erro: ${e.message}</div></div>`;
+    showToast('Erro na análise de idioma','error');
+  }
+}
+
+function sc(v){return v>=85?'#1EC5A0':v>=70?'#C9973A':v>=55?'#F59E0B':'#E24B4A';}
+function sbarH(lbl,val){return`<div class="sbar"><span class="sbar-lbl">${lbl}</span><div class="sbar-track"><div class="sbar-fill" style="width:${val}%;background:${sc(val)};"></div></div><span class="sbar-val" style="color:${sc(val)};">${val}</span></div>`;}
+function sb(s){const m={Triagem:'bblue','Entrevista RH':'bpurple',Técnica:'bamber',Final:'bteal',Proposta:'bgold',Reprovado:'bred'};return`<span class="badge ${m[s]||'bg'}">${s}</span>`;}
+function showToast(msg,type='info'){
+  const d=document.createElement('div');d.className=`toast ${type}`;
+  const ic={success:'✓',error:'✕',info:'ℹ'};
+  d.innerHTML=`<span style="font-size:12px;color:${type==='success'?'var(--teal)':type==='error'?'var(--red)':'var(--blue)'};">${ic[type]}</span><span>${msg}</span>`;
+  document.getElementById('toasts').appendChild(d);setTimeout(()=>d.remove(),3200);
+}
+</script>
+</body>
+</html>
