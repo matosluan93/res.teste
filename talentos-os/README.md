@@ -100,3 +100,7 @@ routes/ (controllers)
               └─► models/ (entidades)
                     └─► PostgreSQL
 ```
+
+Em produção, configure SECRET_KEY e JWT_SECRET_KEY com dois segredos aleatórios distintos
+de pelo menos 32 caracteres cada. Em desenvolvimento, quando omitidos, são gerados por
+processo; reiniciar o servidor invalida os tokens dessa instância.

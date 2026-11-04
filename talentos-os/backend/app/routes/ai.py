@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, g
+from flask import Blueprint, current_app, request, jsonify, g
 from ..middleware.auth import login_required
 from ..services.ai_service import ai_service
 from ..services.audit_service import audit_service
@@ -34,8 +34,10 @@ def analyze_cv():
         db.session.commit()
         audit_service.log(g.current_user.id, "cv_analyzed", "cv_analysis", analysis.id, f"CV de {result.get('nome','?')} analisado")
         return jsonify({"analysis_id": analysis.id, "result": result}), 200
-    except Exception as e:
-        return jsonify({"error": "ai_error", "message": str(e)}), 500
+    except Exception as error:
+        db.session.rollback()
+        current_app.logger.warning("Falha na análise (%s)", type(error).__name__)
+        return jsonify({"error": "ai_error", "message": "Não foi possível concluir a análise"}), 500
 
 @ai_bp.post("/rank-cvs")
 @login_required
@@ -54,8 +56,10 @@ def rank_cvs():
         result = ai_service.rank_cvs(job_desc, cvs)
         audit_service.log(g.current_user.id, "cvs_ranked", None, None, f"Ranking gerado: {len(cvs)} candidatos")
         return jsonify(result), 200
-    except Exception as e:
-        return jsonify({"error": "ai_error", "message": str(e)}), 500
+    except Exception as error:
+        db.session.rollback()
+        current_app.logger.warning("Falha na análise (%s)", type(error).__name__)
+        return jsonify({"error": "ai_error", "message": "Não foi possível concluir a análise"}), 500
 
 @ai_bp.post("/legal-analysis")
 @login_required
@@ -90,8 +94,10 @@ def legal_analysis():
             db.session.commit()
         audit_service.log(g.current_user.id, "legal_analyzed", "legal_analysis", None, f"Análise jurídica: {nome} → {result.get('emoji')}")
         return jsonify(result), 200
-    except Exception as e:
-        return jsonify({"error": "ai_error", "message": str(e)}), 500
+    except Exception as error:
+        db.session.rollback()
+        current_app.logger.warning("Falha na análise (%s)", type(error).__name__)
+        return jsonify({"error": "ai_error", "message": "Não foi possível concluir a análise"}), 500
 
 @ai_bp.post("/analyze-transcript")
 @login_required
@@ -127,8 +133,10 @@ def analyze_transcript():
             db.session.add(assessment)
             db.session.commit()
         return jsonify(result), 200
-    except Exception as e:
-        return jsonify({"error": "ai_error", "message": str(e)}), 500
+    except Exception as error:
+        db.session.rollback()
+        current_app.logger.warning("Falha na análise (%s)", type(error).__name__)
+        return jsonify({"error": "ai_error", "message": "Não foi possível concluir a análise"}), 500
 
 @ai_bp.post("/whatsapp-message")
 @login_required

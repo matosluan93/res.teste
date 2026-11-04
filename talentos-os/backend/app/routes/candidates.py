@@ -42,8 +42,8 @@ def create_candidate():
         c = candidate_service.create_candidate(data, g.current_user.id)
         audit_service.log(g.current_user.id, "candidate_created", "candidate", c.id, f"Candidato criado: {c.name}")
         return jsonify(c.to_dict()), 201
-    except Exception as e:
-        return jsonify({"error": "server_error", "message": str(e)}), 500
+    except Exception:
+        return jsonify({"error": "server_error", "message": "Não foi possível cadastrar o candidato"}), 500
 
 @candidates_bp.put("/<int:id>")
 @login_required
