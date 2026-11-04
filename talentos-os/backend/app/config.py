@@ -1,13 +1,14 @@
 import os
+import secrets
 from datetime import timedelta
 from dotenv import load_dotenv
 load_dotenv()
 
 class BaseConfig:
-    SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-in-prod")
+    SECRET_KEY = os.getenv("SECRET_KEY")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True, "pool_recycle": 300, "pool_size": 10, "max_overflow": 20}
-    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "jwt-dev-key-change-in-prod")
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(seconds=int(os.getenv("JWT_ACCESS_TOKEN_EXPIRES", 3600)))
     JWT_REFRESH_TOKEN_EXPIRES = timedelta(seconds=int(os.getenv("JWT_REFRESH_TOKEN_EXPIRES", 2592000)))
     JWT_TOKEN_LOCATION = ["headers"]
@@ -26,14 +27,19 @@ class BaseConfig:
     ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
 
 class DevelopmentConfig(BaseConfig):
+    SECRET_KEY = BaseConfig.SECRET_KEY or secrets.token_hex(32)
+    JWT_SECRET_KEY = BaseConfig.JWT_SECRET_KEY or secrets.token_hex(32)
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "postgresql://talentos:talentos_secret_dev@localhost:5432/talentos_os")
     CACHE_TYPE = "SimpleCache"
     RATELIMIT_STORAGE_URL = "memory://"
 
 class TestingConfig(BaseConfig):
+    SECRET_KEY = BaseConfig.SECRET_KEY or secrets.token_hex(32)
+    JWT_SECRET_KEY = BaseConfig.JWT_SECRET_KEY or secrets.token_hex(32)
     TESTING = True
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    SQLALCHEMY_ENGINE_OPTIONS = {}
     CACHE_TYPE = "SimpleCache"
     RATELIMIT_ENABLED = False
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(seconds=60)

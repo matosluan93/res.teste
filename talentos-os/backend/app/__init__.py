@@ -5,6 +5,11 @@ from .extensions import db, migrate, jwt, cors, cache, limiter
 def create_app(config_name: str = "development") -> Flask:
     app = Flask(__name__)
     app.config.from_object(config_by_name[config_name])
+    if config_name == "production":
+        secret = app.config["SECRET_KEY"]
+        jwt_secret = app.config["JWT_SECRET_KEY"]
+        if not secret or not jwt_secret or min(len(secret.strip()), len(jwt_secret.strip())) < 32 or secret == jwt_secret:
+            raise RuntimeError("Configure SECRET_KEY e JWT_SECRET_KEY com segredos distintos de pelo menos 32 caracteres.")
     _init_extensions(app)
     _register_blueprints(app)
     _register_error_handlers(app)

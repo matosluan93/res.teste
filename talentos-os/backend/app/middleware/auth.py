@@ -1,6 +1,8 @@
 from functools import wraps
 from flask import jsonify, request, g
 from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
+from flask_jwt_extended.exceptions import JWTExtendedException
+from jwt import PyJWTError
 from ..repositories.user_repo import UserRepository
 
 user_repo = UserRepository()
@@ -10,13 +12,13 @@ def login_required(f):
     def decorated(*args, **kwargs):
         try:
             verify_jwt_in_request()
-            user_id = get_jwt_identity()
-            user = user_repo.get_by_id(int(user_id))
-            if not user or not user.is_active:
-                return jsonify({"error": "unauthorized", "message": "Usuário inativo ou não encontrado"}), 401
-            g.current_user = user
-        except Exception as e:
-            return jsonify({"error": "unauthorized", "message": str(e)}), 401
+            user_id = int(get_jwt_identity())
+        except (JWTExtendedException, PyJWTError, TypeError, ValueError):
+            return jsonify({"error": "unauthorized", "message": "Token inválido ou expirado"}), 401
+        user = user_repo.get_by_id(user_id)
+        if not user or not user.is_active:
+            return jsonify({"error": "unauthorized", "message": "Usuário inativo ou não encontrado"}), 401
+        g.current_user = user
         return f(*args, **kwargs)
     return decorated
 

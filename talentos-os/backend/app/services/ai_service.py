@@ -55,10 +55,10 @@ CURRÍCULO:
 
     def rank_cvs(self, job_description: str, cvs: list[dict]) -> dict:
         client = self._get_client()
-        cvs_text = "
-
-".join([f"=== CANDIDATO {i+1}: {c['name']} ===
-{c['text']}" for i, c in enumerate(cvs)])
+        cvs_text = "\n\n".join(
+            f"=== CANDIDATO {i + 1}: {candidate['name']} ===\n{candidate['text']}"
+            for i, candidate in enumerate(cvs)
+        )
         prompt = f"""Analise {len(cvs)} currículos para a vaga e gere ranking. Retorne SOMENTE JSON:
 {{"vaga_resumida":"","ranking":[{{"posicao":1,"nome":"","score":0,"fit_tecnico":0,"fit_cultural":0,"experiencia":"","pontos_fortes":[""],"pontos_atencao":[""],"justificativa":"2-3 frases","recomendacao":"Avançar|Avaliar|Não recomendado"}}]}}
 VAGA: {job_description}
